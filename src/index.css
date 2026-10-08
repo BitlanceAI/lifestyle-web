@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-display: "Playfair Display", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-gold: #D4AF37;
+  --color-gold-hover: #C5A028;
+  --color-champagne: #F1E5D1;
+  --color-charcoal: #121212;
+  --color-bronze: #8C6A5C;
+  --color-beige: #E8D8C4;
+  --color-ivory: #FDFBF7;
+  --color-warmwhite: #F9F6F0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4AF37/20;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
+
+/* Base custom classes */
+.font-serif-italic {
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+}
+
+.text-reveal-mask {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Smooth custom cursor effects */
+.custom-cursor-active {
+  transform: scale(2);
+  background-color: rgba(212, 175, 55, 0.2);
+  border-color: #D4AF37;
+}
+
+/* Background grain effect for cinematic feel */
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+/* Hide default cursor on luxury interactive elements if needed, but keep fallback */
+.cursor-none-desktop {
+  @media (min-width: 1024px) {
+    cursor: none;
+  }
+}

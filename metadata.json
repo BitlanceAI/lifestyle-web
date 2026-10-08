@@ -1,0 +1,6 @@
+{
+  "name": "Lifestyle Home Spaces",
+  "description": "Premium cinematic real-estate website for Lifestyle Homes, Amravati. A high-end architectural showcase designed for elegant, modern living.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
