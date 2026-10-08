@@ -1,19 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Cormorant Garamond", serif;
-  --font-display: "Playfair Display", serif;
-  --font-sans: "Plus Jakarta Sans", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-serif: "Cormorant Garamond", "Playfair Display", serif;
+  --font-sans: "Inter", "DM Sans", "Manrope", sans-serif;
 
+  --color-primary: #0A0A0A;
+  --color-ivory: #F4EFE6;
+  --color-warmwhite: #FAF8F3;
   --color-gold: #D4AF37;
-  --color-gold-hover: #C5A028;
-  --color-champagne: #F1E5D1;
-  --color-charcoal: #121212;
-  --color-bronze: #8C6A5C;
-  --color-beige: #E8D8C4;
-  --color-ivory: #FDFBF7;
-  --color-warmwhite: #F9F6F0;
+  --color-bronze: #A9873A;
+  --color-charcoal: #171717;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-warmwhite);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
 }
 
 /* Custom Scrollbar */
@@ -22,41 +27,117 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: var(--color-primary);
 }
 ::-webkit-scrollbar-thumb {
-  background: #D4AF37/20;
+  background: color-mix(in srgb, var(--color-gold) 30%, transparent);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4AF37;
+  background: var(--color-gold);
 }
 
-/* Base custom classes */
-.font-serif-italic {
-  font-family: "Cormorant Garamond", serif;
-  font-style: italic;
+/* Image Placeholder Pattern */
+.arch-placeholder {
+  background-color: var(--color-charcoal);
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.4);
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.875rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.text-reveal-mask {
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+.arch-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
 }
 
-/* Smooth custom cursor effects */
-.custom-cursor-active {
-  transform: scale(2);
-  background-color: rgba(212, 175, 55, 0.2);
-  border-color: #D4AF37;
-}
-
-/* Background grain effect for cinematic feel */
-.grain-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
-}
-
-/* Hide default cursor on luxury interactive elements if needed, but keep fallback */
-.cursor-none-desktop {
-  @media (min-width: 1024px) {
-    cursor: none;
+/* Animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Custom cursor */
+#custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-gold);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, background-color 0.3s, mix-blend-mode 0.3s;
+  mix-blend-mode: difference;
+  display: none;
+}
+
+@media (pointer: fine) {
+  #custom-cursor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  body:hover #custom-cursor {
+    opacity: 1;
+  }
+}
+
+#custom-cursor.hovering {
+  width: 64px;
+  height: 64px;
+  background-color: transparent;
+  border: 1px solid var(--color-gold);
+  mix-blend-mode: normal;
+}
+
+#custom-cursor .cursor-text {
+  opacity: 0;
+  color: var(--color-gold);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-sans);
+  transition: opacity 0.3s;
+}
+
+#custom-cursor.hovering .cursor-text {
+  opacity: 1;
+}
+
+.no-cursor {
+  cursor: none !important;
 }
