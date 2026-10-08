@@ -196,38 +196,40 @@ export default function App() {
             <button 
               onClick={() => setMobileMenuOpen(true)} 
               aria-label="Open menu drawer"
-              className="p-2 text-primary hover:text-gold transition-colors focus:outline-none"
+              className="p-2 text-primary hover:text-gold transition-colors focus:outline-none cursor-pointer"
             >
               <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Right Side Slide-Over Drawer Navigation */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <>
-              {/* Backdrop Overlay */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMobileMenuOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 cursor-pointer"
-              />
+      {/* Right Side Slide-Over Drawer Navigation (Full Height) */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Backdrop Overlay */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+            />
 
-              {/* Right Slide Panel */}
+            {/* Slide-over Right Panel */}
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10 z-50">
               <motion.aside 
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                className="fixed top-0 right-0 h-full w-full max-w-sm sm:max-w-md bg-[#FAF8F5] z-50 shadow-2xl flex flex-col justify-between p-6 sm:p-8 border-l border-primary/10 overflow-y-auto"
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="w-screen max-w-md bg-[#FAF8F5] shadow-2xl flex flex-col justify-between p-6 sm:p-8 border-l border-primary/10 overflow-y-auto h-full min-h-screen"
               >
                 {/* Drawer Header */}
                 <div>
                   <div className="flex justify-between items-center pb-6 border-b border-primary/10">
-                    <div className="h-10">
+                    <div className="h-10 flex items-center">
                       <SafeImage 
                         src={ASSETS.logo} 
                         alt="Lifestyle Homes" 
@@ -238,7 +240,7 @@ export default function App() {
                     <button 
                       onClick={() => setMobileMenuOpen(false)}
                       aria-label="Close menu drawer"
-                      className="p-2 text-primary hover:text-gold hover:bg-black/5 rounded-full transition-colors focus:outline-none"
+                      className="p-2 text-primary hover:text-gold hover:bg-black/5 rounded-full transition-colors focus:outline-none cursor-pointer"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -250,7 +252,7 @@ export default function App() {
                       <button
                         key={link.id}
                         onClick={() => scrollTo(link.id)}
-                        className="w-full text-left py-3.5 px-2 border-b border-primary/5 flex items-center justify-between group transition-colors hover:bg-black/[0.02]"
+                        className="w-full text-left py-3.5 px-3 border-b border-primary/5 flex items-center justify-between group transition-colors hover:bg-black/[0.02] cursor-pointer"
                       >
                         <span className="font-serif text-2xl text-primary group-hover:text-gold group-hover:translate-x-1 transition-all">
                           {link.label}
@@ -270,7 +272,7 @@ export default function App() {
                 <div className="pt-6 border-t border-primary/10 flex flex-col space-y-3">
                   <button 
                     onClick={() => { setMobileMenuOpen(false); openEnquiryModal('General Enquiry'); }}
-                    className="w-full bg-primary hover:bg-gold hover:text-primary transition-all duration-300 text-white py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-center shadow-md"
+                    className="w-full bg-primary hover:bg-gold hover:text-primary transition-all duration-300 text-white py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-center shadow-md cursor-pointer"
                   >
                     Book a Site Visit
                   </button>
@@ -288,10 +290,10 @@ export default function App() {
                   </div>
                 </div>
               </motion.aside>
-            </>
-          )}
-        </AnimatePresence>
-      </header>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Main Hero Section (Polished Front Page) */}
       <section id="overview" className="relative pt-28 sm:pt-32 lg:pt-36 pb-16 lg:pb-24 overflow-hidden bg-[#FAF8F5]">
