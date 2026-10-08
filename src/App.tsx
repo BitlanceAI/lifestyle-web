@@ -19,6 +19,8 @@ const ASSETS = {
   chandelier: '/assets/interiors/chandelier.jpg',
   storage: '/assets/interiors/storage-room.jpg',
   balcony: '/assets/interiors/balcony.jpg',
+  bedroomBalcony: '/assets/interiors/bedroom-balcony.jpg',
+  hallWalkthrough: '/assets/interiors/hall-walkthrough.jpg',
 };
 
 // WhatsApp Helpline
@@ -678,7 +680,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* 5. Storage Room (New Uploaded Image) */}
+            {/* 5. Storage Room */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/3] bg-charcoal">
               <SafeImage src={ASSETS.storage} alt="Dedicated Storage Room" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -688,7 +690,27 @@ export default function App() {
               </div>
             </div>
 
-            {/* 6. Living Room False Ceiling Detail */}
+            {/* 6. Bedroom with Balcony Deck (New Image) */}
+            <div className="relative group overflow-hidden rounded-lg aspect-[4/3] bg-charcoal">
+              <SafeImage src={ASSETS.bedroomBalcony} alt="Bedroom with Balcony" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Bedrooms</span>
+                <h4 className="font-serif text-xl">Sunlit Suite &amp; Balcony Deck</h4>
+              </div>
+            </div>
+
+            {/* 7. Hall Natural Illumination (New Image) */}
+            <div className="relative group overflow-hidden rounded-lg aspect-[4/3] bg-charcoal">
+              <SafeImage src={ASSETS.hallWalkthrough} alt="Expansive Living Hall" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Living Spaces</span>
+                <h4 className="font-serif text-xl">Expansive Living &amp; Dining Hall</h4>
+              </div>
+            </div>
+
+            {/* 8. Living Room False Ceiling Detail */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/3] bg-charcoal">
               <SafeImage src={ASSETS.livingRoomDetail} alt="Hall False Ceiling" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -856,8 +878,10 @@ export default function App() {
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
             {[
               { img: ASSETS.buildingHero, caption: "Street Perspective View" },
+              { img: ASSETS.bedroomBalcony, caption: "Sunlit Bedroom with Balcony Deck" },
               { img: ASSETS.livingRoom, caption: "Living Room with Chandelier" },
               { img: ASSETS.corridor, caption: "Designer Chevron Entrance Lobby" },
+              { img: ASSETS.hallWalkthrough, caption: "Spacious Living & Dining Hall" },
               { img: ASSETS.buildingElevation, caption: "Frontal Building Elevation" },
               { img: ASSETS.kitchen, caption: "Modern Fitted Kitchen Platform" },
               { img: ASSETS.chandelier, caption: "Opulent Crystal Chandelier & False Ceiling" },
@@ -892,13 +916,12 @@ export default function App() {
             
             <div>
               <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-bold block mb-1">
-                Promoters &amp; Developers
+                Architectural Excellence
               </span>
               <h3 className="font-serif text-2xl sm:text-3xl text-primary mb-2">Built With Purpose.</h3>
               <p className="text-charcoal/70 text-sm leading-relaxed mb-4">
-                Lifestyle Home Spaces is proudly developed under the leadership of 
-                <strong> Rajesh Mishra</strong> and <strong>Amit Talda</strong>. Committed to quality construction, 
-                structural integrity, and transparent execution.
+                Lifestyle Home Spaces represents an uncompromising commitment to superior structural integrity, 
+                thoughtful layout planning, and transparent execution in the prime heart of Amravati.
               </p>
             </div>
 
@@ -972,7 +995,7 @@ export default function App() {
           </div>
           <div className="text-center md:text-right text-white/50">
             <p>&copy; {new Date().getFullYear()} Lifestyle Home Spaces. All rights reserved.</p>
-            <p className="text-[10px] mt-1 text-white/40">Amravati, Maharashtra · Developed by Rajesh Mishra &amp; Amit Talda</p>
+            <p className="text-[10px] mt-1 text-white/40">DPS Road, Parvati Nagar, Amravati, Maharashtra · Lifestyle Home Spaces</p>
           </div>
         </div>
       </footer>
@@ -1069,7 +1092,7 @@ export default function App() {
 
               <div className="mt-4 text-center">
                 <p className="text-[10px] text-charcoal/50">
-                  Project Developers: Rajesh Mishra &amp; Amit Talda · DPS Road, Amravati
+                  Project Site Office: Lifestyle Home Spaces · DPS Road, Parvati Nagar, Amravati
                 </p>
               </div>
 
