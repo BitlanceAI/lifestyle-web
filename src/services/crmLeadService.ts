@@ -19,8 +19,11 @@ export interface LeadCaptureResult {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SERVICE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
-const CRM_ORG_ID =
+// Targets both the primary CRM organization and the dashboard organization
+const PRIMARY_ORG_ID =
   import.meta.env.VITE_CRM_ORG_ID || '8a7fe841-bda6-46a1-a033-d68d2bb2a318';
+const DASHBOARD_ORG_ID = '956739fd-5b6f-46f6-9e8f-82b6e17ee482';
+
 const CRM_ADMIN_ID =
   import.meta.env.VITE_CRM_ADMIN_ID || '403ac464-fdf6-4cd7-b415-4cef9f17fa21';
 const CRM_AGENT_ID =
@@ -53,9 +56,8 @@ function normalizePhone(rawPhone: string): string {
 }
 
 /**
- * Captures a lead into the Lifestyle Real Estate CRM
- * Automatically assigns the lead to agent@lifestylehomespaces.com and notifies both
- * admin@lifestylehomespaces.com and agent@lifestylehomespaces.com
+ * Captures a lead into the Real Estate CRM database.
+ * Ensures the lead is visible in both the Lifestyle org and main CRM dashboard.
  */
 export async function captureLeadInCRM(
   payload: LeadCapturePayload
@@ -73,7 +75,7 @@ export async function captureLeadInCRM(
     const { firstName, lastName } = splitName(payload.name || '');
     const phone = normalizePhone(payload.phone || '');
     const email = payload.email?.trim() || null;
-    const sourceTitle = payload.source || 'Website Registration';
+    const sourceTitle = payload.source || 'Website Contact Form';
     const project = payload.project || 'Lifestyle Home Spaces';
     const preference = payload.preference || '2 BHK Residence';
 
@@ -95,136 +97,140 @@ export async function captureLeadInCRM(
       'Prefer': 'return=representation',
     };
 
-    // 1. Check if lead already exists in this organization by phone
+    const targetOrgs = Array.from(new Set([PRIMARY_ORG_ID, DASHBOARD_ORG_ID].filter(Boolean)));
     const phoneLast10 = phone.replace(/\D/g, '').slice(-10);
-    let existingLead: any = null;
+    let primaryLeadId: string | undefined;
 
-    if (phoneLast10.length >= 7) {
-      const searchRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/leads?organization_id=eq.${CRM_ORG_ID}&phone=like.*${phoneLast10}&limit=1`,
-        { headers }
-      );
-      if (searchRes.ok) {
-        const matches = await searchRes.json();
-        if (Array.isArray(matches) && matches.length > 0) {
-          existingLead = matches[0];
+    for (const orgId of targetOrgs) {
+      try {
+        let existingLead: any = null;
+        if (phoneLast10.length >= 7) {
+          const searchRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/leads?organization_id=eq.${orgId}&phone=like.*${phoneLast10}*&limit=1`,
+            { headers }
+          );
+          if (searchRes.ok) {
+            const matches = await searchRes.json();
+            if (Array.isArray(matches) && matches.length > 0) {
+              existingLead = matches[0];
+            }
+          }
         }
+
+        let leadId: string;
+
+        if (existingLead) {
+          leadId = existingLead.id;
+          const existingNotes = existingLead.notes || '';
+          const updatedNotes = `${existingNotes}\n[${new Date().toISOString()}] ${formattedNotes}`.trim();
+
+          await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({
+              notes: updatedNotes,
+              email: email || existingLead.email,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+        } else {
+          // Insert new Lead
+          const insertPayload: Record<string, any> = {
+            organization_id: orgId,
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone,
+            status: 'new',
+            temperature: 'warm',
+            source: 'website',
+            location: 'Amravati, Maharashtra',
+            notes: formattedNotes,
+          };
+
+          if (orgId === PRIMARY_ORG_ID && CRM_AGENT_ID) {
+            insertPayload.assigned_to = CRM_AGENT_ID;
+          }
+
+          const insertLeadRes = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(insertPayload),
+          });
+
+          if (insertLeadRes.ok) {
+            const createdLeads = await insertLeadRes.json();
+            leadId = createdLeads[0]?.id;
+          } else {
+            const errText = await insertLeadRes.text();
+            console.error(`Failed to insert lead into CRM org ${orgId}:`, errText);
+            continue;
+          }
+        }
+
+        if (!primaryLeadId) {
+          primaryLeadId = leadId;
+        }
+
+        // Try to log activity (fail-safe)
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/activities`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              organization_id: orgId,
+              lead_id: leadId,
+              type: 'lead_created',
+              payload: {
+                via: 'website',
+                details: `Website form submitted for ${project}`,
+                source: 'website',
+                lead_name: `${firstName} ${lastName}`.trim(),
+              },
+            }),
+          });
+        } catch {}
+
+        // In-app notifications for primary org
+        if (orgId === PRIMARY_ORG_ID) {
+          try {
+            if (CRM_AGENT_ID) {
+              await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  organization_id: orgId,
+                  recipient_id: CRM_AGENT_ID,
+                  lead_id: leadId,
+                  type: 'lead_assigned',
+                  message: `New Lead: ${firstName} ${lastName} (${phone}) interested in ${project} [${preference}]`,
+                }),
+              });
+            }
+            if (CRM_ADMIN_ID) {
+              await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  organization_id: orgId,
+                  recipient_id: CRM_ADMIN_ID,
+                  lead_id: leadId,
+                  type: 'lead_triage',
+                  message: `New Website Lead captured: ${firstName} ${lastName} (${phone})`,
+                }),
+              });
+            }
+          } catch {}
+        }
+      } catch (innerErr) {
+        console.error(`Error saving to org ${orgId}:`, innerErr);
       }
     }
-
-    let leadId: string;
-
-    if (existingLead) {
-      leadId = existingLead.id;
-      // Enrich existing lead with newly provided notes
-      const existingNotes = existingLead.notes || '';
-      const updatedNotes = `${existingNotes}\n[${new Date().toISOString()}] ${formattedNotes}`.trim();
-
-      await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({
-          notes: updatedNotes,
-          updated_at: new Date().toISOString(),
-        }),
-      });
-
-      // Log note/activity on timeline
-      await fetch(`${SUPABASE_URL}/rest/v1/activities`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          organization_id: CRM_ORG_ID,
-          lead_id: leadId,
-          type: 'note',
-          payload: {
-            via: 'website',
-            details: `Repeat enquiry received via ${sourceTitle}`,
-            project,
-            preference,
-            source: 'website',
-          },
-        }),
-      });
-    } else {
-      // 2. Insert new Lead assigned directly to Lifestyle Agent
-      const insertLeadRes = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          organization_id: CRM_ORG_ID,
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          phone,
-          status: 'new',
-          temperature: 'warm',
-          source: 'website',
-          location: 'Amravati, Maharashtra',
-          assigned_to: CRM_AGENT_ID, // agent@lifestylehomespaces.com
-          notes: formattedNotes,
-        }),
-      });
-
-      if (!insertLeadRes.ok) {
-        const errText = await insertLeadRes.text();
-        console.error('Failed to insert lead into CRM:', errText);
-        return { success: false, error: errText };
-      }
-
-      const createdLeads = await insertLeadRes.json();
-      leadId = createdLeads[0].id;
-
-      // 3. Log lead creation in timeline activities
-      await fetch(`${SUPABASE_URL}/rest/v1/activities`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          organization_id: CRM_ORG_ID,
-          lead_id: leadId,
-          type: 'lead_created',
-          payload: {
-            via: 'website',
-            details: `Lead created from ${sourceTitle} for ${project}`,
-            source: 'website',
-            lead_name: `${firstName} ${lastName}`.trim(),
-            assigned_agent: 'agent@lifestylehomespaces.com',
-            admin_notified: 'admin@lifestylehomespaces.com',
-          },
-        }),
-      });
-    }
-
-    // 4. Create in-app notification for Agent (agent@lifestylehomespaces.com)
-    await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        organization_id: CRM_ORG_ID,
-        recipient_id: CRM_AGENT_ID,
-        lead_id: leadId,
-        type: 'lead_assigned',
-        message: `New Lead: ${firstName} ${lastName} (${phone}) interested in ${project} [${preference}]`,
-      }),
-    });
-
-    // 5. Create in-app notification for Admin (admin@lifestylehomespaces.com)
-    await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        organization_id: CRM_ORG_ID,
-        recipient_id: CRM_ADMIN_ID,
-        lead_id: leadId,
-        type: 'lead_triage',
-        message: `New Website Lead captured: ${firstName} ${lastName} (${phone}) - assigned to agent@lifestylehomespaces.com`,
-      }),
-    });
 
     return {
       success: true,
-      leadId,
-      message: 'Lead successfully captured and assigned in Lifestyle CRM',
+      leadId: primaryLeadId,
+      message: 'Lead successfully captured in Real Estate CRM',
     };
   } catch (err: any) {
     console.error('Error in captureLeadInCRM:', err);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Phone, MessageCircle, User, Sparkles } from 'lucide-react';
+import { X, Calendar, Phone, MessageCircle, User, Mail, Sparkles, Loader2 } from 'lucide-react';
 import { ProjectConfig, BRAND_CONFIG } from '../data/projects';
 import { captureLeadInCRM } from '../services/crmLeadService';
 
@@ -23,8 +23,10 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
 }) => {
   const [name, setName] = useState(defaultName);
   const [phone, setPhone] = useState(defaultPhone);
+  const [email, setEmail] = useState('');
   const [preference, setPreference] = useState(defaultPreference);
   const [preferredDate, setPreferredDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
     if (defaultName) setName(defaultName);
@@ -35,26 +37,34 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
   if (!isOpen) return null;
 
   const activeProjectName = project ? project.projectName : BRAND_CONFIG.name;
-  const whatsappTarget = project ? project.contact.whatsapp : BRAND_CONFIG.whatsappNumber;
+  // Always routes to Lifestyle's official WhatsApp number
+  const whatsappTarget = BRAND_CONFIG.whatsappNumber || '918530763405';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Capture the lead asynchronously into Lifestyle Real Estate CRM
-    captureLeadInCRM({
-      name,
-      phone,
-      project: activeProjectName,
-      preference,
-      preferredDate,
-      source: 'Website Contact Form (Site Visit Booking)',
-    }).catch((err) => {
+    try {
+      // 1. Capture the lead directly into Real Estate CRM
+      await captureLeadInCRM({
+        name,
+        phone,
+        email: email.trim() || undefined,
+        project: activeProjectName,
+        preference,
+        preferredDate,
+        source: 'Website Contact Form (Site Visit Booking)',
+      });
+    } catch (err) {
       console.error('Failed to capture lead in CRM:', err);
-    });
+    }
 
-    const msg = `Hello Lifestyle Team,\n\nI would like to schedule a private site visit for *${activeProjectName}*.\n\n*Name:* ${name || 'Prospective Buyer'}\n*Phone:* ${phone || 'Not provided'}\n*Preference:* ${preference}\n*Preferred Date:* ${preferredDate || 'Earliest Available'}\n\nPlease share floor plans and schedule my appointment.`;
+    // 2. Open WhatsApp on the Lifestyle number
+    const emailLine = email.trim() ? `\n*Email:* ${email.trim()}` : '';
+    const msg = `Hello Lifestyle Team,\n\nI would like to schedule a private site visit for *${activeProjectName}*.\n\n*Name:* ${name || 'Prospective Buyer'}\n*Phone:* ${phone || 'Not provided'}${emailLine}\n*Preference:* ${preference}\n*Preferred Date:* ${preferredDate || 'Earliest Available'}\n\nPlease share floor plans and schedule my appointment.`;
     
     window.open(`https://wa.me/${whatsappTarget}?text=${encodeURIComponent(msg)}`, '_blank');
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -139,6 +149,23 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               </div>
             </div>
 
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-300 block mb-1.5 font-medium flex items-center justify-between">
+                <span>Email Address</span>
+                <span className="text-zinc-500 lowercase text-[10px]">(optional)</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. rajesh@example.com"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/50 border border-white/10 text-sm focus:border-[#D4AF37] focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] uppercase tracking-wider text-zinc-300 block mb-1.5 font-medium">
@@ -180,10 +207,20 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-bold bg-[#D4AF37] text-black hover:bg-white transition-all duration-300 shadow-xl shadow-[#D4AF37]/10 flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-bold bg-[#D4AF37] text-black hover:bg-white transition-all duration-300 shadow-xl shadow-[#D4AF37]/10 flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Confirm Appointment via WhatsApp →</span>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Booking Appointment...</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Confirm Appointment via WhatsApp →</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

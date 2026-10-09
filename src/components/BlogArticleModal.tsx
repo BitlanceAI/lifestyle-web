@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Clock, Sparkles, CheckCircle2, MessageCircle, ArrowRight, Share2, Building2 } from 'lucide-react';
 import { BrandBlogPost, BRAND_CONFIG } from '../data/projects';
+import { captureLeadInCRM } from '../services/crmLeadService';
 
 interface BlogArticleModalProps {
   blog: BrandBlogPost | null;
@@ -29,8 +30,22 @@ export const BlogArticleModal: React.FC<BlogArticleModalProps> = ({
     }
   };
 
-  const handleArticleInquiry = (e: React.FormEvent) => {
+  const handleArticleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Capture in Real Estate CRM
+    try {
+      await captureLeadInCRM({
+        name: inquiryName,
+        phone: inquiryPhone,
+        project: 'Lifestyle Home Spaces',
+        source: `Article Inquiry (${blog.title})`,
+        notes: inquiryNote,
+      });
+    } catch (err) {
+      console.error('CRM capture error:', err);
+    }
+
     const msg = `Hello Lifestyle Team,\n\nI was reading your publication: *"${blog.title}"* and would like to request further details, floor plans, and pricing for this development.\n\n*Name:* ${inquiryName || 'Interested Reader'}\n*WhatsApp:* ${inquiryPhone || 'Not specified'}\n*Query/Note:* ${inquiryNote || 'Please share brochure and schedule an appointment.'}`;
     
     window.open(`https://wa.me/${BRAND_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
