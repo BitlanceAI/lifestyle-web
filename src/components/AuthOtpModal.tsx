@@ -16,6 +16,7 @@ import {
 import { BRAND_CONFIG } from '../data/projects';
 
 import { sendWhatsappOtp } from '../services/whatsappService';
+import { captureLeadInCRM } from '../services/crmLeadService';
 
 export interface VerifiedUser {
   name: string;
@@ -80,6 +81,15 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
     // Call real WhatsApp API
     const result = await sendWhatsappOtp(phone, newOtp);
     
+    // Capture lead in CRM when OTP is requested
+    captureLeadInCRM({
+      name: name.trim() || 'Prospective Buyer',
+      phone: phone.trim(),
+      project: interest,
+      preference: details,
+      source: 'Website Registration (OTP Requested)',
+    }).catch((err) => console.error('CRM capture error:', err));
+
     setIsSendingOtp(false);
     
     if (result.success) {
@@ -110,6 +120,17 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
         verifiedAt: new Date().toISOString(),
       };
       localStorage.setItem('lifestyle_user', JSON.stringify(verifiedUser));
+
+      // Capture verified status in CRM
+      captureLeadInCRM({
+        name: verifiedUser.name,
+        phone: verifiedUser.phone,
+        project: interest,
+        preference: details,
+        source: 'Website Registration (Verified Client)',
+        notes: `User successfully verified via WhatsApp OTP at ${new Date().toISOString()}`,
+      }).catch((err) => console.error('CRM capture error on verify:', err));
+
       setStep('success');
       setTimeout(() => {
         onSuccess(verifiedUser);

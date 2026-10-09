@@ -120,7 +120,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
             </a>
 
             <button
-              onClick={onOpenEnquiry}
+              onClick={() => onOpenEnquiry()}
               className="w-full sm:w-auto px-8 py-4 rounded text-xs uppercase tracking-[0.25em] font-medium border border-white/20 text-[#F5E6C8] hover:bg-white/10 transition-all duration-300 backdrop-blur-md"
             >
               Contact Developer Desk

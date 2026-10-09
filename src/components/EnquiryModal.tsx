@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Phone, MessageCircle, User, Sparkles } from 'lucide-react';
 import { ProjectConfig, BRAND_CONFIG } from '../data/projects';
+import { captureLeadInCRM } from '../services/crmLeadService';
 
 interface EnquiryModalProps {
   isOpen: boolean;
@@ -38,6 +39,19 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Capture the lead asynchronously into Lifestyle Real Estate CRM
+    captureLeadInCRM({
+      name,
+      phone,
+      project: activeProjectName,
+      preference,
+      preferredDate,
+      source: 'Website Contact Form (Site Visit Booking)',
+    }).catch((err) => {
+      console.error('Failed to capture lead in CRM:', err);
+    });
+
     const msg = `Hello Lifestyle Team,\n\nI would like to schedule a private site visit for *${activeProjectName}*.\n\n*Name:* ${name || 'Prospective Buyer'}\n*Phone:* ${phone || 'Not provided'}\n*Preference:* ${preference}\n*Preferred Date:* ${preferredDate || 'Earliest Available'}\n\nPlease share floor plans and schedule my appointment.`;
     
     window.open(`https://wa.me/${whatsappTarget}?text=${encodeURIComponent(msg)}`, '_blank');
