@@ -105,29 +105,23 @@ export async function sendWhatsappOtp(
 }
 
 /**
- * Sends a real-time WhatsApp notification directly to the owner/admin when:
- * 1. A new user signs in (verifies mobile)
- * 2. A user submits an enquiry
+ * Sends a real-time WhatsApp notification directly to the owner number (8530763405)
+ * using Bitlance AI (Phone ID 744188362103708) from Real Estate CRM.
+ * The customer NEVER receives this message — it is sent ONLY to the owner.
  */
 export async function notifyOwnerOnWhatsApp(
   params: OwnerNotificationParams
 ): Promise<{ success: boolean; error?: string }> {
-  const envOwner = import.meta.env.VITE_OWNER_WHATSAPP_NUMBER;
-  const rawList = envOwner ? envOwner.split(',') : ['918318768905', '916398792951'];
-  
-  // Format numbers and filter out sending number (Meta API does not permit messaging self)
-  let targetNumbers = Array.from(
-    new Set(
-      rawList
-        .map((num: string) => num.replace(/\D/g, ''))
-        .filter((num: string) => num.length >= 10 && num !== '918530763405' && num !== '8530763405')
-    )
-  );
+  // 1. Bitlance AI sender credentials (from CRM config)
+  const bitlancePhoneId =
+    import.meta.env.VITE_BITLANCE_WHATSAPP_PHONE_ID || '744188362103708';
+  const bitlanceToken =
+    import.meta.env.VITE_BITLANCE_WHATSAPP_TOKEN ||
+    'EAAU6uBLPyowBRZB635p73IoYSJusGBYeJPNezLQWnPmjnr5i2ZB7ZCNZCmZCkvvjGuvqSFVb6ejubUsH1hgt95joyIxi7emH2NlfxCT5sIAwtisWs9HQZBKURg79rqKa20cYRi2KQ0mLRXE7hhIRJ3vjlfrsDUFD0mk6pW3DGwMoR5AItC2OwZAFqzhMMHQwYfyHQZDZD';
 
-  // If the only configured number is the sender (8530763405), fallback to admin phone 918318768905 so alert is delivered
-  if (targetNumbers.length === 0) {
-    targetNumbers = ['918318768905'];
-  }
+  // 2. Owner recipient: Official Lifestyle Owner from CRM (8530763405)
+  const ownerRecipient = (import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || '918530763405').replace(/\D/g, '');
+  const cleanOwnerTo = ownerRecipient.length === 10 ? '91' + ownerRecipient : ownerRecipient;
 
   const nowIST = new Date().toLocaleString('en-IN', {
     timeZone: 'Asia/Kolkata',
@@ -135,101 +129,49 @@ export async function notifyOwnerOnWhatsApp(
     timeStyle: 'short',
   });
 
-  const eventText =
+  const actionText =
     params.type === 'sign_in'
-      ? `New Sign-In: ${params.name || 'Client'} (${params.phone})`
-      : `New Enquiry [${params.referenceId || 'LHS'}]: ${params.name || 'Client'} (${params.phone}) for ${params.preference || 'Residence'}`;
+      ? 'signed in to the client portal'
+      : 'submitted a new property enquiry';
 
-  const detailText =
+  const detailParam =
     params.type === 'sign_in'
-      ? `Lifestyle Web at ${nowIST}`
-      : `${params.project || 'Lifestyle Home Spaces'} at ${nowIST}`;
+      ? 'Member Portal Access'
+      : `${params.project || 'Lifestyle Home Spaces'} (${params.preference || 'Residence'})`;
 
-  for (const recipient of targetNumbers) {
-    try {
-      const cleanTo = recipient.length === 10 ? '91' + recipient : recipient;
-      const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
+  const refParam = params.referenceId || `LHS-MEMBER-${params.phone.replace(/\D/g, '').slice(-4)}`;
+  const emailLine = params.email?.trim() ? `\n• Email: ${params.email.trim()}` : '';
 
-      // 1. Prepare lifestyle_lead_alert payload (approved by Meta in language 'en')
-      const actionText =
-        params.type === 'sign_in'
-          ? 'signed in to the client portal'
-          : 'submitted a new property enquiry';
-      const detailParam =
-        params.type === 'sign_in'
-          ? 'Member Portal Access'
-          : `${params.project || 'Lifestyle Home Spaces'} (${params.preference || 'Residence'})`;
-      const refParam = params.referenceId || `LHS-MEMBER-${params.phone.replace(/\D/g, '').slice(-4)}`;
+  const messageBody = `Hello Lifestyle Team,\n\nA customer has ${actionText} on Lifestyle Home Spaces.\n\n*Customer Details:*\n• Name: ${params.name || 'Valued Client'}\n• Phone: ${params.phone}${emailLine}\n• Details / Project: ${detailParam}\n• Reference ID: ${refParam}\n• Time: ${nowIST} IST\n\nPlease follow up with the customer promptly.`;
 
-      const primaryPayload = {
+  try {
+    const url = `https://graph.facebook.com/v19.0/${bitlancePhoneId}/messages`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${bitlanceToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         messaging_product: 'whatsapp',
-        to: cleanTo,
-        type: 'template',
-        template: {
-          name: 'lifestyle_lead_alert',
-          language: { code: 'en' },
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: actionText },
-                { type: 'text', text: params.name || 'Valued Client' },
-                { type: 'text', text: params.phone },
-                { type: 'text', text: detailParam },
-                { type: 'text', text: refParam },
-              ],
-            },
-          ],
-        },
-      };
+        to: cleanOwnerTo,
+        type: 'text',
+        text: { body: messageBody },
+      }),
+    });
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(primaryPayload),
-      });
-
-      // If lifestyle_lead_alert is still under review by Meta, fallback to approved wacrm_appointment_reminder
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        console.warn('lifestyle_lead_alert not yet active (under review), trying fallback template:', errJson);
-
-        await fetch(url, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: cleanTo,
-            type: 'template',
-            template: {
-              name: 'wacrm_appointment_reminder',
-              language: { code: 'en_US' },
-              components: [
-                {
-                  type: 'body',
-                  parameters: [
-                    { type: 'text', text: 'Lifestyle Owner' },
-                    { type: 'text', text: eventText },
-                    { type: 'text', text: detailText },
-                  ],
-                },
-              ],
-            },
-          }),
-        });
-      }
-    } catch (err) {
-      console.warn('Failed to dispatch owner WhatsApp notification to', recipient, err);
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      console.warn('Bitlance AI message to owner returned error:', data);
+    } else {
+      console.log('Owner notification dispatched via Bitlance AI to', cleanOwnerTo, data);
     }
+    return { success: res.ok };
+  } catch (err: any) {
+    console.warn('Failed to dispatch owner notification via Bitlance AI:', err);
+    return { success: false, error: err?.message };
   }
-
-  return { success: true };
 }
 
 /**
