@@ -2,7 +2,7 @@ import { LeadCapturePayload } from './crmLeadService';
 
 const TOKEN = import.meta.env.VITE_WHATSAPP_ACCESS_TOKEN || '';
 const PHONE_NUMBER_ID = import.meta.env.VITE_WHATSAPP_PHONE_ID || '1321450167713117';
-const OFFICIAL_LIFESTYLE_WHATSAPP = '918530763405';
+const OFFICIAL_LIFESTYLE_WHATSAPP = '919730768982';
 
 export interface SendOtpResult {
   success: boolean;
@@ -120,7 +120,7 @@ export async function notifyOwnerOnWhatsApp(
     'EAAU6uBLPyowBRZB635p73IoYSJusGBYeJPNezLQWnPmjnr5i2ZB7ZCNZCmZCkvvjGuvqSFVb6ejubUsH1hgt95joyIxi7emH2NlfxCT5sIAwtisWs9HQZBKURg79rqKa20cYRi2KQ0mLRXE7hhIRJ3vjlfrsDUFD0mk6pW3DGwMoR5AItC2OwZAFqzhMMHQwYfyHQZDZD';
 
   // 2. Owner recipient: Official Lifestyle Owner from CRM (8530763405)
-  const ownerRecipient = (import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || '918530763405').replace(/\D/g, '');
+  const ownerRecipient = (import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || '919730768982').replace(/\D/g, '');
   const cleanOwnerTo = ownerRecipient.length === 10 ? '91' + ownerRecipient : ownerRecipient;
 
   const nowIST = new Date().toLocaleString('en-IN', {
