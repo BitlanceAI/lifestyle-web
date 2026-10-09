@@ -113,16 +113,21 @@ export async function notifyOwnerOnWhatsApp(
   params: OwnerNotificationParams
 ): Promise<{ success: boolean; error?: string }> {
   const envOwner = import.meta.env.VITE_OWNER_WHATSAPP_NUMBER;
-  const rawList = envOwner ? envOwner.split(',') : ['916398792951'];
+  const rawList = envOwner ? envOwner.split(',') : ['918318768905', '916398792951'];
   
-  // Format numbers and filter out sending number (cannot message itself)
-  const targetNumbers = Array.from(
+  // Format numbers and filter out sending number (Meta API does not permit messaging self)
+  let targetNumbers = Array.from(
     new Set(
       rawList
         .map((num: string) => num.replace(/\D/g, ''))
         .filter((num: string) => num.length >= 10 && num !== '918530763405' && num !== '8530763405')
     )
   );
+
+  // If the only configured number is the sender (8530763405), fallback to admin phone 918318768905 so alert is delivered
+  if (targetNumbers.length === 0) {
+    targetNumbers = ['918318768905'];
+  }
 
   const nowIST = new Date().toLocaleString('en-IN', {
     timeZone: 'Asia/Kolkata',
@@ -145,7 +150,7 @@ export async function notifyOwnerOnWhatsApp(
       const cleanTo = recipient.length === 10 ? '91' + recipient : recipient;
       const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
 
-      // 1. Prepare lifestyle_lead_alert payload (unified for Sign In & Enquiry)
+      // 1. Prepare lifestyle_lead_alert payload (approved by Meta in language 'en')
       const actionText =
         params.type === 'sign_in'
           ? 'signed in to the client portal'
@@ -162,7 +167,7 @@ export async function notifyOwnerOnWhatsApp(
         type: 'template',
         template: {
           name: 'lifestyle_lead_alert',
-          language: { code: 'en_US' },
+          language: { code: 'en' },
           components: [
             {
               type: 'body',
