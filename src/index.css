@@ -2,12 +2,14 @@
 
 @theme {
   --font-serif: "Cormorant Garamond", "Playfair Display", serif;
+  --font-cinzel: "Cinzel", "Cormorant Garamond", serif;
   --font-sans: "Inter", "DM Sans", "Manrope", sans-serif;
 
   --color-primary: #0A0A0A;
   --color-ivory: #F4EFE6;
   --color-warmwhite: #FAF8F3;
   --color-gold: #D4AF37;
+  --color-champagne: #F5E6C8;
   --color-bronze: #A9873A;
   --color-charcoal: #171717;
 }
