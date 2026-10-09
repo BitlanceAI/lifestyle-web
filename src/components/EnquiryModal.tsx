@@ -21,6 +21,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { ProjectConfig, BRAND_CONFIG, PROJECTS } from '../data/projects';
+import { captureLeadInCRM, generateReferenceId, normalizePhone } from '../services/crmLeadService';
 import {
   sendWhatsappOtp,
   getLifestyleConciergeWhatsAppUrl,
