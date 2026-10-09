@@ -111,6 +111,12 @@ function AppShell() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('lifestyle_user');
+    sessionStorage.removeItem('lifestyle_guest_browsing');
+    setCurrentUser(null);
+  };
+
   return (
     <div className="font-sans min-h-screen selection:bg-[#D4AF37]/30 selection:text-white">
       {/* Universal Luxury Navigation */}
@@ -121,6 +127,7 @@ function AppShell() {
         onScrollToSection={handleScrollToSection}
         onOpenEnquiry={() => handleOpenEnquiry()}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
         currentUser={currentUser}
       />
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, Sparkles, Building2, Phone, MessageCircle, MapPin } from 'lucide-react';
+import { Menu, X, ChevronDown, Sparkles, Building2, Phone, MessageCircle, MapPin, LogOut } from 'lucide-react';
 import { PROJECTS, ProjectConfig, BRAND_CONFIG } from '../data/projects';
 
 interface ProjectNavbarProps {
@@ -10,6 +10,7 @@ interface ProjectNavbarProps {
   onScrollToSection: (sectionId: string) => void;
   onOpenEnquiry: () => void;
   onOpenAuth: () => void;
+  onLogout?: () => void;
   currentUser?: { name: string; phone: string; verified: boolean } | null;
 }
 
@@ -20,6 +21,7 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
   onScrollToSection,
   onOpenEnquiry,
   onOpenAuth,
+  onLogout,
   currentUser,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -174,14 +176,33 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
 
           {/* Action CTAs */}
           <div className="hidden sm:flex items-center gap-3">
-            <button
-              onClick={onOpenAuth}
-              className="px-3.5 py-2 rounded text-xs font-mono font-medium border border-[#25D366]/40 hover:border-[#25D366] text-white hover:bg-[#25D366]/10 transition-all flex items-center gap-1.5 shadow-sm"
-              title={currentUser?.verified ? `Verified Client: ${currentUser.name}` : 'Sign In with WhatsApp OTP'}
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-              <span>{currentUser?.verified ? `${currentUser.name.split(' ')[0]} ✓` : 'WhatsApp Sign In'}</span>
-            </button>
+            {currentUser?.verified ? (
+              <div className="flex items-center gap-2 bg-black/60 border border-[#25D366]/40 rounded-lg py-1 px-2.5 shadow-sm">
+                <span
+                  className="text-xs font-mono text-zinc-200 flex items-center gap-1.5"
+                  title={`Verified Client: ${currentUser.name} (${currentUser.phone})`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
+                  <span className="font-medium text-white">{currentUser.name.split(' ')[0]}</span>
+                </span>
+                <button
+                  onClick={onLogout}
+                  title="Logout from current profile"
+                  className="p-1 hover:bg-white/10 text-zinc-400 hover:text-red-400 rounded transition-colors flex items-center gap-1 ml-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="text-[10px] uppercase font-mono tracking-wider">Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-3.5 py-2 rounded text-xs font-mono font-medium border border-[#25D366]/40 hover:border-[#25D366] text-white hover:bg-[#25D366]/10 transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                <span>WhatsApp Sign In</span>
+              </button>
+            )}
 
             <button
               onClick={onOpenEnquiry}
@@ -364,6 +385,39 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
 
               {/* Drawer Bottom Actions */}
               <div className="pt-6 border-t border-white/10 space-y-3">
+                {currentUser?.verified ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#25D366]" />
+                      <div className="text-left">
+                        <p className="text-xs font-semibold text-white">{currentUser.name}</p>
+                        <p className="text-[10px] font-mono text-zinc-400">{currentUser.phone}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onLogout?.();
+                      }}
+                      className="px-2.5 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] uppercase font-mono tracking-wider flex items-center gap-1 transition-colors"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onOpenAuth();
+                    }}
+                    className="w-full py-3 rounded text-xs font-mono font-medium border border-[#25D366]/40 hover:border-[#25D366] text-white hover:bg-[#25D366]/10 transition-all flex items-center justify-center gap-2 mb-2"
+                  >
+                    <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                    <span>WhatsApp Sign In</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
