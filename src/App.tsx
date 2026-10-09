@@ -5,7 +5,8 @@ import { ProjectNavbar } from './components/ProjectNavbar';
 import { BrandHomePage } from './components/BrandHomePage';
 import { ProjectPage } from './components/ProjectPage';
 import { EnquiryModal } from './components/EnquiryModal';
-import { AuthOtpModal, VerifiedUser } from './components/AuthOtpModal';
+import { AuthOtpModal } from './components/AuthOtpModal';
+import { VerifiedUser } from './types/auth';
 import { Chatbot } from './Chatbot';
 
 // Dynamic Project Route Component
@@ -68,18 +69,8 @@ function AppShell() {
     }
   });
 
-  // Appears first when coming to the web (unless already verified or continuing as guest in session)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lifestyle_user');
-      if (saved) return false;
-      const guestMode = sessionStorage.getItem('lifestyle_guest_browsing');
-      if (guestMode) return false;
-      return true; // Pops up first on arrival
-    } catch {
-      return true;
-    }
-  });
+  // Never opens automatically on page visit or refresh. Opens ONLY when explicitly clicking Sign In.
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Determine active project based on URL path
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -176,7 +167,7 @@ function AppShell() {
       {/* Portfolio Concierge Chatbot */}
       <Chatbot />
 
-      {/* Site Visit Booking Modal */}
+      {/* Site Visit Booking / Dedicated Priority Enquiry Modal */}
       <EnquiryModal
         isOpen={isEnquiryOpen}
         onClose={() => setIsEnquiryOpen(false)}
@@ -184,6 +175,8 @@ function AppShell() {
         defaultPreference={enquiryPreference}
         defaultName={currentUser?.name || ''}
         defaultPhone={currentUser?.phone || ''}
+        currentUser={currentUser}
+        onUserVerified={(user) => setCurrentUser(user)}
       />
 
       {/* WhatsApp OTP Verification / First Landing Gate */}

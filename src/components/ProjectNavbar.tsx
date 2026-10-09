@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, Sparkles, Building2, Phone, MessageCircle, MapPin, LogOut } from 'lucide-react';
+import { Menu, X, ChevronDown, Sparkles, Building2, Phone, MessageCircle, MapPin, LogOut, User } from 'lucide-react';
 import { PROJECTS, ProjectConfig, BRAND_CONFIG } from '../data/projects';
 
 interface ProjectNavbarProps {
@@ -74,27 +74,18 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-12 flex justify-between items-center">
           
-          {/* Brand Logo & Name */}
+          {/* Brand Logo */}
           <div className="flex items-center gap-4">
             <button
               onClick={onNavigateHome}
-              className="flex items-center gap-3 text-left focus:outline-none group"
+              className="flex items-center focus:outline-none group"
+              aria-label="Lifestyle Home Spaces"
             >
               <img
                 src={BRAND_CONFIG.logo}
                 alt={BRAND_CONFIG.name}
                 className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="hidden sm:block">
-                <span className={`text-xs font-semibold tracking-[0.2em] uppercase block leading-tight ${
-                  isAura || isBrandHome ? 'text-white' : 'text-primary'
-                }`}>
-                  {BRAND_CONFIG.name}
-                </span>
-                <span className="text-[10px] text-[#D4AF37] tracking-[0.15em] uppercase font-mono block">
-                  {currentProject ? currentProject.projectName : 'Architectural Portfolio'}
-                </span>
-              </div>
             </button>
           </div>
 
@@ -197,10 +188,10 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="px-3.5 py-2 rounded text-xs font-mono font-medium border border-[#25D366]/40 hover:border-[#25D366] text-white hover:bg-[#25D366]/10 transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 rounded text-xs font-mono font-medium border border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 transition-all flex items-center gap-1.5 shadow-sm"
               >
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                <span>WhatsApp Sign In</span>
+                <User className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Sign In</span>
               </button>
             )}
 
@@ -251,9 +242,6 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                 <div className="flex items-center justify-between pb-6 border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <img src={BRAND_CONFIG.logo} alt="Logo" className="h-8 w-auto" />
-                    <span className="text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
-                      {BRAND_CONFIG.name}
-                    </span>
                   </div>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
@@ -263,15 +251,15 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                   </button>
                 </div>
 
-                {/* WhatsApp Authentication Status in Drawer */}
+                {/* Client Authentication Status in Drawer */}
                 <div className="mt-4 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#25D366]/20 flex items-center justify-center border border-[#25D366]/40">
-                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                    <div className="w-7 h-7 rounded-full bg-[#D4AF37]/15 flex items-center justify-center border border-[#D4AF37]/30">
+                      <User className="w-3.5 h-3.5 text-[#D4AF37]" />
                     </div>
                     <div>
                       <span className="text-xs font-medium text-white block">
-                        {currentUser?.verified ? currentUser.name : 'WhatsApp Sign In'}
+                        {currentUser?.verified ? currentUser.name : 'Sign In'}
                       </span>
                       <span className="text-[10px] text-[#D4AF37] font-mono block">
                         {currentUser?.verified ? 'Verified Client' : 'Unlock Blueprints & Folios'}
@@ -411,10 +399,10 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                       setMobileMenuOpen(false);
                       onOpenAuth();
                     }}
-                    className="w-full py-3 rounded text-xs font-mono font-medium border border-[#25D366]/40 hover:border-[#25D366] text-white hover:bg-[#25D366]/10 transition-all flex items-center justify-center gap-2 mb-2"
+                    className="w-full py-3 rounded text-xs font-mono font-medium border border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2 mb-2"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                    <span>WhatsApp Sign In</span>
+                    <User className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Sign In</span>
                   </button>
                 )}
 

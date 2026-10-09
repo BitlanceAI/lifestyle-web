@@ -44,22 +44,40 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
       {/* Brand Hero Section */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-24 pb-16">
         
-        {/* Cinematic Backdrop Montage */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Cinematic Backdrop Montage: Architectural Landmark + Lifestyle Living Fusion */}
+        <div className="absolute inset-0 z-0 overflow-hidden bg-[#08080A]">
+          {/* Left Wing: Iconic Lifestyle Building Architecture */}
           <motion.div
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1.02, opacity: 0.35 }}
+            initial={{ scale: 1.08, opacity: 0 }}
+            animate={{ scale: 1.02, opacity: 0.8 }}
             transition={{ duration: 2, ease: 'easeOut' }}
-            className="w-full h-full"
+            className="absolute inset-y-0 left-0 w-full sm:w-[62%] h-full overflow-hidden [mask-image:linear-gradient(to_right,black_35%,transparent_100%)] sm:[mask-image:linear-gradient(to_right,black_45%,transparent_100%)]"
+          >
+            <img
+              src="/assets/projects/lifestyle-homes/building/building-hero-polished.jpg"
+              alt="Lifestyle Homes Architectural Elevation"
+              className="w-full h-full object-cover object-center filter brightness-[0.76] contrast-[1.12] saturate-[0.92]"
+            />
+          </motion.div>
+
+          {/* Right Wing: Warm Lifestyle Living Experience */}
+          <motion.div
+            initial={{ scale: 1.08, opacity: 0 }}
+            animate={{ scale: 1.02, opacity: 0.8 }}
+            transition={{ duration: 2, delay: 0.2, ease: 'easeOut' }}
+            className="absolute inset-y-0 right-0 w-full sm:w-[62%] h-full overflow-hidden [mask-image:linear-gradient(to_left,black_35%,transparent_100%)] sm:[mask-image:linear-gradient(to_left,black_45%,transparent_100%)]"
           >
             <img
               src="/assets/projects/aura/building/aura-building-hero.jpg"
-              alt="Lifestyle Landmark"
-              className="w-full h-full object-cover filter blur-[1px]"
+              alt="Lifestyle Living Atmosphere"
+              className="w-full h-full object-cover object-center filter brightness-[0.78] contrast-[1.1] saturate-[0.95]"
             />
           </motion.div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-[#08080A]/70 to-[#08080A]/40" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,#08080A_90%)]" />
+
+          {/* Unified Cinematic Luxury Vignettes & Color Grading Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-[#08080A]/25 to-[#08080A]/75 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#08080A]/50 via-transparent to-[#08080A]/50 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(8,8,10,0.35)_0%,rgba(8,8,10,0.8)_100%)] pointer-events-none" />
         </div>
 
         {/* Brand Headline & Narrative */}
@@ -74,7 +92,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
             <img
               src={BRAND_CONFIG.logo}
               alt={BRAND_CONFIG.name}
-              className="h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow"
+              className="h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
             />
           </motion.div>
 
@@ -82,7 +100,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-4xl sm:text-6xl md:text-7xl font-light font-cinzel text-white tracking-tight leading-[1.1] mb-6"
+            className="text-4xl sm:text-6xl md:text-7xl font-light font-cinzel text-white tracking-tight leading-[1.1] mb-6 drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]"
           >
             LIFESTYLE HOME SPACES
           </motion.h1>
@@ -91,7 +109,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.6 }}
-            className="text-base sm:text-xl md:text-2xl text-[#D4AF37] font-serif italic mb-6"
+            className="text-base sm:text-xl md:text-2xl text-[#D4AF37] font-serif italic mb-6 drop-shadow-[0_2px_14px_rgba(0,0,0,0.9)]"
           >
             “{BRAND_CONFIG.subTagline}”
           </motion.p>
@@ -100,7 +118,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.8 }}
-            className="text-sm sm:text-base md:text-lg text-[#C5BBAA] font-light max-w-2xl mx-auto leading-relaxed mb-12"
+            className="text-sm sm:text-base md:text-lg text-[#EDE6D8] font-light max-w-2xl mx-auto leading-relaxed mb-12 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
           >
             {BRAND_CONFIG.vision}
           </motion.p>
