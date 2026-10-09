@@ -147,6 +147,7 @@ export async function notifyOwnerOnWhatsApp(
   try {
     const url = `https://graph.facebook.com/v19.0/${bitlancePhoneId}/messages`;
 
+    // Send using the approved template 'lifestyle_lead_alert'
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -156,8 +157,25 @@ export async function notifyOwnerOnWhatsApp(
       body: JSON.stringify({
         messaging_product: 'whatsapp',
         to: cleanOwnerTo,
-        type: 'text',
-        text: { body: messageBody },
+        type: 'template',
+        template: {
+          name: 'lifestyle_lead_alert',
+          language: {
+            code: 'en'
+          },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: params.name || 'Valued Client' },
+                { type: 'text', text: params.phone + (emailLine ? ` | ${params.email}` : '') },
+                { type: 'text', text: detailParam },
+                { type: 'text', text: refParam },
+                { type: 'text', text: `${nowIST} IST` }
+              ]
+            }
+          ]
+        }
       }),
     });
 
