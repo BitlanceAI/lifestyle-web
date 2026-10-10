@@ -174,7 +174,7 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                             )}
                           </div>
                           <span className="text-[10px] text-[#D4AF37] font-light mt-0.5">
-                            {p.category} · {p.location.area}
+                            {p.category} · {p.location.area || p.location.city}
                           </span>
                         </button>
                       );

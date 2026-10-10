@@ -124,6 +124,7 @@ export interface ProjectConfig {
 
   location: {
     address: string;
+    area?: string;
     city: string;
     state: string;
     description: string;
@@ -461,6 +462,7 @@ export const PROJECTS: Record<string, ProjectConfig> = {
 
     location: {
       address: 'DPS Road, Parvati Nagar, Near Avinashe Avenue',
+      area: 'DPS Road',
       city: 'Amravati',
       state: 'Maharashtra',
       description: 'Positioned on the prestigious DPS Road, Lifestyle Homes balances peaceful residential privacy with rapid transit access to Amravati’s commercial, academic, and healthcare nodes.',
@@ -892,6 +894,7 @@ export const PROJECTS: Record<string, ProjectConfig> = {
 
     location: {
       address: 'Congress Nagar Road, Next To Dreamz Signature, Congress Nagar',
+      area: 'Congress Nagar',
       city: 'Amravati',
       state: 'Maharashtra',
       description: 'Located in prestigious Congress Nagar, Aura places you at the center of convenience. With seamless connectivity to major roads, commercial spaces, and everyday essentials, Aura ensures that everything you need is always within reach.',
