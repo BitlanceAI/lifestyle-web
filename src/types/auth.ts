@@ -7,7 +7,10 @@ export interface VerifiedUser {
   verified: boolean;
   verifiedAt: string;
   token?: string;
+  role?: 'admin' | 'client';
+  isAdmin?: boolean;
 }
+
 
 export interface LeadEnquiryData {
   name: string;

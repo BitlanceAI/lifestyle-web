@@ -13,7 +13,7 @@ export const Developer: React.FC<DeveloperProps> = ({ project }) => {
   const team = dev.team || [];
 
   return (
-    <section id="developer" className={`py-20 lg:py-28 ${
+    <section id="developer" className={`py-20 lg:py-28 scroll-mt-20 ${
       isAura ? 'bg-[#0B0B0D] text-[#F5E6C8]' : 'bg-[#FAF8F5] text-primary'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-12">

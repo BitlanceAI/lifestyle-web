@@ -15,25 +15,34 @@ import {
   HelpCircle, 
   CheckCircle2, 
   Award,
-  ExternalLink 
+  ExternalLink,
+  Wand2
 } from 'lucide-react';
 import { PROJECTS, BRAND_CONFIG, BrandBlogPost } from '../data/projects';
+import { getAllMergedBlogs } from '../services/blogGeneratorService';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { PolicyModal } from './PolicyModal';
 import { BlogArticleModal } from './BlogArticleModal';
+import { BlogGeneratorModal } from './BlogGeneratorModal';
+import { VerifiedUser } from '../types/auth';
 
 interface BrandHomePageProps {
   onSelectProject: (slug: string) => void;
   onOpenEnquiry: (pref?: string) => void;
+  currentUser?: VerifiedUser | null;
 }
 
-export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, onOpenEnquiry }) => {
+export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, onOpenEnquiry, currentUser }) => {
+
   const [activeFaqCategory, setActiveFaqCategory] = useState<string>('All');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [policyModalType, setPolicyModalType] = useState<'terms' | 'privacy' | null>(null);
   const [selectedBlog, setSelectedBlog] = useState<BrandBlogPost | null>(null);
+  const [blogs, setBlogs] = useState<BrandBlogPost[]>(() => getAllMergedBlogs());
+  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
 
   const faqCategories = ['All', ...Array.from(new Set(BRAND_CONFIG.faqs.map(f => f.category)))];
+
   const filteredFaqs = activeFaqCategory === 'All' 
     ? BRAND_CONFIG.faqs 
     : BRAND_CONFIG.faqs.filter(f => f.category === activeFaqCategory);
@@ -285,39 +294,60 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
       <section id="brand-insights" className="py-20 lg:py-28 bg-[#09090C] border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6 lg:px-12">
           
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-[#D4AF37] block mb-2">
-              REAL ESTATE INSIGHTS
-            </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light font-cinzel text-white">
-              Articles & Buyer Guides
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-[#C5BBAA] font-light">
-              Official publications, sample flat walkthroughs, and investment guidance in Amravati.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light font-cinzel text-white">
+                Articles & Buyer Guides
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-[#C5BBAA] font-light">
+                Official publications, sample flat walkthroughs, and AI-powered real estate market intelligence in Amravati.
+              </p>
+            </div>
+
+            {/* Quick Actions (Admin Only) */}
+            {currentUser?.isAdmin && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsGeneratorOpen(true)}
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black font-semibold text-xs uppercase tracking-wider hover:brightness-110 transition-all duration-300 shadow-xl shadow-[#D4AF37]/20 flex items-center gap-2 cursor-pointer"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  <span>Generate Article with Bitlance AI</span>
+                </button>
+              </div>
+            )}
           </div>
 
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {BRAND_CONFIG.blogs.slice(0, 3).map((blog, bIdx) => (
+            {blogs.slice(0, 6).map((blog, bIdx) => (
               <motion.article
-                key={bIdx}
+                key={blog.id || bIdx}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: bIdx * 0.15 }}
+                transition={{ duration: 0.7, delay: (bIdx % 3) * 0.15 }}
                 onClick={() => setSelectedBlog(blog)}
                 className="rounded-2xl overflow-hidden border border-white/5 bg-[#141418] group flex flex-col justify-between hover:border-[#D4AF37]/50 transition-all shadow-xl cursor-pointer"
               >
-                <div className="relative aspect-[16/10] overflow-hidden">
+                <div className="relative aspect-[16/10] overflow-hidden bg-black">
                   <img
                     src={blog.image}
                     alt={blog.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <span className="absolute top-4 left-4 px-3 py-1 rounded text-[10px] font-mono tracking-widest uppercase bg-[#D4AF37] text-black font-bold">
-                    {blog.category}
-                  </span>
+                  <div className="absolute top-4 left-4 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded text-[10px] font-mono tracking-widest uppercase bg-[#D4AF37] text-black font-bold">
+                      {blog.category}
+                    </span>
+                    {blog.isAiGenerated && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase bg-[#25D366] text-black font-bold flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        <span>AI SEO</span>
+                      </span>
+                    )}
+                  </div>
                   {blog.readTime && (
                     <span className="absolute bottom-3 right-4 text-[10px] text-zinc-300 font-mono bg-black/60 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-sm">
                       {blog.readTime}
@@ -341,7 +371,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
                       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                     </span>
                     <span className="text-[10px] font-mono text-zinc-500 uppercase">
-                      Folio
+                      {blog.date || 'Folio'}
                     </span>
                   </div>
                 </div>
@@ -351,6 +381,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
 
         </div>
       </section>
+
 
       {/* Frequently Asked Questions */}
       <section id="brand-faq" className="py-20 lg:py-28 bg-[#0D0D10] border-t border-white/5">
@@ -433,7 +464,7 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
       </section>
 
       {/* Developer Footer & Corporate Contact */}
-      <footer id="brand-contact" className="py-20 border-t border-white/10 bg-[#060608]">
+      <footer id="brand-contact" className="py-20 border-t border-white/10 bg-[#060608] scroll-mt-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-12">
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16 text-left">
@@ -587,6 +618,17 @@ export const BrandHomePage: React.FC<BrandHomePageProps> = ({ onSelectProject, o
         onOpenEnquiry={onOpenEnquiry}
       />
 
+      {/* Bitlance AI Article Generator Modal */}
+      <BlogGeneratorModal
+        isOpen={isGeneratorOpen}
+        onClose={() => setIsGeneratorOpen(false)}
+        onBlogGenerated={(newBlog) => {
+          setBlogs(getAllMergedBlogs());
+          setSelectedBlog(newBlog);
+        }}
+      />
+
     </div>
   );
 };
+

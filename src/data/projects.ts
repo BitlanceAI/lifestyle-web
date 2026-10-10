@@ -196,7 +196,13 @@ export interface BrandBlogPost {
   content: string[];
   highlights: string[];
   relatedProject?: string;
+  markdown?: string;
+  isAiGenerated?: boolean;
+  topic?: string;
+  keywords?: string;
+  creditsUsed?: number;
 }
+
 
 export interface BrandFAQ {
   question: string;

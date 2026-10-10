@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, Sparkles, Building2, Phone, MessageCircle, MapPin, LogOut, User } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, BookOpen, Wand2 } from 'lucide-react';
 import { PROJECTS, ProjectConfig, BRAND_CONFIG } from '../data/projects';
+import { VerifiedUser } from '../types/auth';
 
 interface ProjectNavbarProps {
   currentProject?: ProjectConfig | null;
@@ -11,7 +12,9 @@ interface ProjectNavbarProps {
   onOpenEnquiry: () => void;
   onOpenAuth: () => void;
   onLogout?: () => void;
-  currentUser?: { name: string; phone: string; verified: boolean } | null;
+  currentUser?: VerifiedUser | null;
+  onOpenBlogGenerator?: () => void;
+  onNavigateBlogs?: () => void;
 }
 
 export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
@@ -23,6 +26,8 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
   onOpenAuth,
   onLogout,
   currentUser,
+  onOpenBlogGenerator,
+  onNavigateBlogs,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,6 +35,8 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
 
   const isAura = currentProject?.slug === 'aura';
   const isBrandHome = !currentProject;
+  const isBlogsPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/blogs');
+  const isDarkHeader = Boolean(isAura || isBrandHome || isBlogsPage);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,23 +46,30 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLinkClick = (id: string) => {
+    if (id === 'blogs' || id === 'brand-insights') {
+      if (onNavigateBlogs) {
+        onNavigateBlogs();
+      } else {
+        onScrollToSection('brand-insights');
+      }
+      return;
+    }
+    onScrollToSection(id);
+  };
+
+  // Streamlined 4-5 essential navigation options to prevent navbar overcrowding
   const navLinks = currentProject
     ? [
-        { id: 'overview', label: 'OVERVIEW' },
-        { id: 'showcase', label: 'SHOWCASE' },
-        { id: 'residences', label: 'RESIDENCES' },
         { id: 'floor-plans', label: 'FLOOR PLANS' },
         { id: 'amenities', label: 'AMENITIES' },
-        { id: 'location', label: 'LOCATION' },
-        { id: 'gallery', label: 'GALLERY' },
-        { id: 'developer', label: 'ABOUT US' },
+        { id: 'blogs', label: 'BLOGS', isBlog: true },
+        { id: 'developer', label: 'CONTACT' },
       ]
     : [
-        { id: 'projects-portfolio', label: 'PROJECTS' },
-        { id: 'brand-leadership', label: 'LEADERSHIP' },
-        { id: 'brand-vision', label: 'VALUES' },
-        { id: 'brand-insights', label: 'INSIGHTS' },
-        { id: 'brand-faq', label: 'FAQS' },
+        { id: 'brand-vision', label: 'AMENITIES' },
+        { id: 'blogs', label: 'BLOGS', isBlog: true },
+        { id: 'brand-leadership', label: 'ABOUT US' },
         { id: 'brand-contact', label: 'CONTACT' },
       ];
 
@@ -64,42 +78,34 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
       <header
         className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
           isScrolled
-            ? isAura || isBrandHome
+            ? isDarkHeader
               ? 'bg-[#0B0B0D]/95 backdrop-blur-md shadow-2xl py-3 border-b border-[#D4AF37]/20'
-              : 'bg-[#FAF8F5]/95 backdrop-blur-md shadow-md py-3.5 border-b border-primary/10'
-            : isAura || isBrandHome
-              ? 'bg-gradient-to-b from-black/80 to-transparent py-5'
-              : 'bg-gradient-to-b from-[#FAF8F5]/90 to-transparent py-5'
-        } ${isAura || isBrandHome ? 'text-[#F5E6C8]' : 'text-primary'}`}
+              : 'bg-[#FAF8F5]/95 backdrop-blur-md shadow-md py-3 border-b border-black/10'
+            : isDarkHeader
+              ? 'bg-gradient-to-b from-black/80 to-transparent py-4 sm:py-5'
+              : 'bg-gradient-to-b from-[#FAF8F5]/90 to-transparent py-4 sm:py-5'
+        } ${isDarkHeader ? 'text-[#F5E6C8]' : 'text-zinc-900'}`}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-12 flex justify-between items-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex justify-between items-center">
           
-          {/* Brand Logo */}
-          <div className="flex items-center gap-4">
+          {/* Brand Logo (Links to Home) */}
+          <div className="flex items-center gap-3">
             <button
               onClick={onNavigateHome}
-              className="flex items-center focus:outline-none group"
+              className="flex items-center focus:outline-none group cursor-pointer"
               aria-label="Lifestyle Home Spaces"
+              title="Return to Home Portfolio"
             >
               <img
                 src={BRAND_CONFIG.logo}
                 alt={BRAND_CONFIG.name}
-                className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-9 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </button>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden xl:flex items-center gap-6 2xl:gap-8">
-            <button
-              onClick={onNavigateHome}
-              className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors ${
-                isBrandHome ? 'text-[#D4AF37] font-bold' : 'hover:text-[#D4AF37]'
-              }`}
-            >
-              HOME
-            </button>
-
+          {/* Desktop & Laptop Navigation Bar: Clean, Streamlined, No Clutter */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 2xl:gap-10">
             {/* PROJECTS Dropdown Menu */}
             <div
               className="relative"
@@ -107,12 +113,16 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
               onMouseLeave={() => setProjectsDropdownOpen(false)}
             >
               <button
-                className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors flex items-center gap-1.5 py-2 ${
-                  !isBrandHome ? 'text-[#D4AF37] font-bold' : 'hover:text-[#D4AF37]'
+                className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors flex items-center gap-1.5 py-2 cursor-pointer ${
+                  projectsDropdownOpen
+                    ? 'text-[#D4AF37]'
+                    : isDarkHeader
+                      ? 'text-zinc-300 hover:text-[#D4AF37]'
+                      : 'text-zinc-800 hover:text-[#D4AF37]'
                 }`}
               >
                 <span>PROJECTS</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${projectsDropdownOpen ? 'rotate-180 text-[#D4AF37]' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -134,7 +144,7 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                           setProjectsDropdownOpen(false);
                           onSelectProject(p.slug);
                         }}
-                        className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-all duration-200 flex flex-col ${
+                        className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-all duration-200 flex flex-col cursor-pointer ${
                           currentProject?.slug === p.slug
                             ? 'bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-white'
                             : 'hover:bg-white/10 text-[#C5BBAA] hover:text-white'
@@ -153,33 +163,67 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Section links */}
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => onScrollToSection(link.id)}
-                className="text-xs uppercase tracking-[0.2em] font-medium transition-colors hover:text-[#D4AF37]"
-              >
-                {link.label}
-              </button>
-            ))}
+            {/* Essential Section Links */}
+            {navLinks.map((link) => {
+              const isActive = link.isBlog ? isBlogsPage : false;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => handleLinkClick(link.id)}
+                  className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors cursor-pointer ${
+                    isActive
+                      ? isDarkHeader
+                        ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5'
+                        : 'text-[#B8860B] font-bold border-b-2 border-[#B8860B] pb-0.5'
+                      : isDarkHeader
+                        ? 'text-zinc-300 hover:text-[#D4AF37]'
+                        : 'text-zinc-800 hover:text-[#D4AF37]'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Action CTAs */}
-          <div className="hidden sm:flex items-center gap-3">
+          {/* Action CTAs: High-Contrast Sign In & Enquire Buttons */}
+          <div className="hidden sm:flex items-center gap-3.5">
             {currentUser?.verified ? (
-              <div className="flex items-center gap-2 bg-black/60 border border-[#25D366]/40 rounded-lg py-1 px-2.5 shadow-sm">
+              <div
+                className={`flex items-center gap-2 border rounded-lg py-1 px-2.5 shadow-sm ${
+                  isDarkHeader
+                    ? 'bg-black/60 border-[#D4AF37]/40 text-zinc-200'
+                    : 'bg-white/90 border-[#D4AF37]/60 text-zinc-900 shadow'
+                }`}
+              >
                 <span
-                  className="text-xs font-mono text-zinc-200 flex items-center gap-1.5"
-                  title={`Verified Client: ${currentUser.name} (${currentUser.phone})`}
+                  className={`text-xs font-mono flex items-center gap-1.5 ${
+                    isDarkHeader ? 'text-zinc-200' : 'text-zinc-900'
+                  }`}
+                  title={`${currentUser.isAdmin ? 'Administrator' : 'Verified Client'}: ${currentUser.name} (${currentUser.phone})`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
-                  <span className="font-medium text-white">{currentUser.name.split(' ')[0]}</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      currentUser.isAdmin ? 'bg-[#D4AF37]' : 'bg-[#25D366]'
+                    } animate-pulse`}
+                  />
+                  <span className={`font-semibold ${isDarkHeader ? 'text-white' : 'text-zinc-900'}`}>
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                  {currentUser.isAdmin && (
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono tracking-wider uppercase bg-[#D4AF37] text-black font-bold">
+                      ADMIN
+                    </span>
+                  )}
                 </span>
                 <button
                   onClick={onLogout}
                   title="Logout from current profile"
-                  className="p-1 hover:bg-white/10 text-zinc-400 hover:text-red-400 rounded transition-colors flex items-center gap-1 ml-1"
+                  className={`p-1 rounded transition-colors flex items-center gap-1 ml-1 cursor-pointer ${
+                    isDarkHeader
+                      ? 'hover:bg-white/10 text-zinc-400 hover:text-red-400'
+                      : 'hover:bg-black/10 text-zinc-600 hover:text-red-600'
+                  }`}
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="text-[10px] uppercase font-mono tracking-wider">Logout</span>
@@ -188,32 +232,50 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="px-4 py-2 rounded text-xs font-mono font-medium border border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 transition-all flex items-center gap-1.5 shadow-sm"
+                className={`px-3.5 py-2 rounded text-xs font-mono font-semibold border transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                  isDarkHeader
+                    ? 'border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 bg-white/[0.04]'
+                    : 'border-zinc-800/40 hover:border-[#D4AF37] text-zinc-900 hover:text-black hover:bg-black/10 bg-black/[0.05]'
+                }`}
               >
                 <User className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Sign In</span>
+                <span className="font-semibold tracking-wide">Sign In</span>
+              </button>
+            )}
+
+            {/* Admin-only AI Blog Studio Trigger */}
+            {currentUser?.isAdmin && onOpenBlogGenerator && (
+              <button
+                onClick={onOpenBlogGenerator}
+                title="Generate Real Estate Blog with Bitlance AI (Admin)"
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono font-medium border border-[#D4AF37] text-black bg-[#D4AF37] hover:bg-white transition-all shadow-md cursor-pointer"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                <span>AI Blog Studio</span>
               </button>
             )}
 
             <button
               onClick={onOpenEnquiry}
-              className={`px-5 py-2.5 rounded text-xs uppercase tracking-[0.2em] font-bold transition-all duration-300 shadow-md ${
-                isAura || isBrandHome
+              className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] font-bold transition-all duration-300 shadow-md cursor-pointer ${
+                isDarkHeader
                   ? 'bg-[#D4AF37] text-black hover:bg-white'
-                  : 'bg-primary text-white hover:bg-[#D4AF37] hover:text-primary'
+                  : 'bg-zinc-900 text-white hover:bg-[#D4AF37] hover:text-black border border-zinc-900'
               }`}
             >
               Enquire
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button (Visible below lg) */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="xl:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className={`lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer ${
+              isDarkHeader ? 'text-[#D4AF37]' : 'text-zinc-900'
+            }`}
             aria-label="Open Navigation"
           >
-            <Menu className="w-6 h-6 text-[#D4AF37]" />
+            <Menu className="w-6 h-6" />
           </button>
 
         </div>
@@ -236,16 +298,16 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm bg-[#101014] border-l border-[#D4AF37]/30 h-full p-6 sm:p-8 flex flex-col justify-between overflow-y-auto text-white z-10"
+              className="relative w-full max-w-sm bg-[#101014] border-l border-[#D4AF37]/30 h-full p-6 flex flex-col justify-between overflow-y-auto text-white z-10"
             >
               <div>
-                <div className="flex items-center justify-between pb-6 border-b border-white/10">
+                <div className="flex items-center justify-between pb-5 border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <img src={BRAND_CONFIG.logo} alt="Logo" className="h-8 w-auto" />
                   </div>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
+                    className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -262,7 +324,11 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                         {currentUser?.verified ? currentUser.name : 'Sign In'}
                       </span>
                       <span className="text-[10px] text-[#D4AF37] font-mono block">
-                        {currentUser?.verified ? 'Verified Client' : 'Unlock Blueprints & Folios'}
+                        {currentUser?.verified
+                          ? currentUser.isAdmin
+                            ? 'Administrator Access'
+                            : 'Verified Client'
+                          : 'Unlock Blueprints & Folios'}
                       </span>
                     </div>
                   </div>
@@ -271,110 +337,127 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                       setMobileMenuOpen(false);
                       onOpenAuth();
                     }}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors cursor-pointer"
                   >
-                    {currentUser?.verified ? 'Profile' : 'Sign In'}
+                    {currentUser?.verified ? (currentUser.isAdmin ? 'Admin' : 'Profile') : 'Sign In'}
                   </button>
                 </div>
 
-                {/* Portfolio Switcher in Drawer */}
-                <div className="py-6 border-b border-white/10">
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-[#D4AF37] block mb-3">
-                    SELECT PROJECT
-                  </span>
-                  <div className="space-y-2.5">
-                    {Object.values(PROJECTS).map((p) => (
-                      <div
-                        key={p.slug}
-                        className={`w-full p-3.5 rounded-xl border transition-all ${
-                          currentProject?.slug === p.slug
-                            ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-white shadow-lg shadow-[#D4AF37]/10'
-                            : 'bg-white/5 border-white/5 text-zinc-300 hover:border-[#D4AF37]/40'
-                        }`}
-                      >
-                        <button
-                          onClick={() => {
-                            setMobileMenuOpen(false);
-                            onSelectProject(p.slug);
-                          }}
-                          className="w-full text-left focus:outline-none"
-                        >
-                          <span className="text-xs font-bold uppercase tracking-wider block font-cinzel">
-                            {p.projectName}
-                          </span>
-                          <span className="text-[10px] text-zinc-400 block mt-0.5">
-                            {p.category}
-                          </span>
-                        </button>
-                        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between">
-                          <a
-                            href={`https://maps.google.com/?q=${encodeURIComponent(p.location.googleMapsQuery)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1.5 text-[11px] text-[#D4AF37] hover:text-white transition-colors py-1 px-2 rounded bg-black/40 border border-[#D4AF37]/30 hover:border-[#D4AF37]"
-                            title={`Open ${p.projectName} on Google Maps`}
-                          >
-                            <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-                            <span>{p.location.city} on Google Maps ↗</span>
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Navigation Links */}
-                <div className="py-6 space-y-4">
+                {/* Essential Navigation Links */}
+                <div className="py-6 space-y-3.5">
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       onNavigateHome();
                     }}
-                    className="block w-full text-left text-sm uppercase tracking-[0.2em] font-medium hover:text-[#D4AF37] transition-colors"
+                    className="block w-full text-left text-xs uppercase tracking-[0.2em] font-medium hover:text-[#D4AF37] transition-colors cursor-pointer"
                   >
                     HOME PORTFOLIO
                   </button>
+
+                  {/* Direct Project Jump Links */}
+                  <div className="pt-1 pb-2 space-y-2 border-y border-white/5 my-2">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#D4AF37] block">
+                      OUR DEVELOPMENTS
+                    </span>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onSelectProject('lifestyle-homes');
+                      }}
+                      className="block w-full text-left text-xs uppercase tracking-[0.15em] font-cinzel text-zinc-300 hover:text-[#D4AF37] transition-colors cursor-pointer"
+                    >
+                      • Lifestyle Homes (DPS Road)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onSelectProject('aura');
+                      }}
+                      className="block w-full text-left text-xs uppercase tracking-[0.15em] font-cinzel text-zinc-300 hover:text-[#D4AF37] transition-colors cursor-pointer"
+                    >
+                      • Aura by Lifestyle (Congress Nagar)
+                    </button>
+                  </div>
+
                   {navLinks.map((link) => (
                     <button
                       key={link.id}
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        onScrollToSection(link.id);
+                        handleLinkClick(link.id);
                       }}
-                      className="block w-full text-left text-sm uppercase tracking-[0.2em] font-medium text-zinc-300 hover:text-[#D4AF37] transition-colors"
+                      className={`block w-full text-left text-xs uppercase tracking-[0.2em] font-medium transition-colors cursor-pointer ${
+                        link.isBlog && isBlogsPage ? 'text-[#D4AF37] font-bold' : 'text-zinc-300 hover:text-[#D4AF37]'
+                      }`}
                     >
                       {link.label}
                     </button>
                   ))}
                 </div>
 
-                {/* Corporate Office Location in Drawer */}
-                <div className="py-4 px-3.5 rounded-xl bg-white/5 border border-white/10 my-2">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#D4AF37]">
-                      Corporate Headquarters
-                    </span>
+                {/* Blogs Section in Drawer */}
+                <div className="py-4 border-t border-white/10">
+                  <div className="p-3.5 rounded-xl bg-gradient-to-br from-white/5 to-[#D4AF37]/5 border border-[#D4AF37]/30 space-y-2.5">
+                    <div>
+                      <h4 className="text-xs font-cinzel font-light text-white tracking-wide flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>Real Estate Folios & Guides</span>
+                      </h4>
+                      <p className="text-[11px] text-zinc-400 font-light mt-0.5 leading-relaxed">
+                        Amravati market analysis, sample flat walkthroughs, and MahaRERA guides.
+                      </p>
+                    </div>
+
+                    <div className="pt-1">
+                      {currentUser?.isAdmin && onOpenBlogGenerator ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              if (onNavigateBlogs) onNavigateBlogs();
+                              else onScrollToSection('brand-insights');
+                            }}
+                            className="px-3 py-2 rounded-lg bg-white/10 hover:bg-[#D4AF37]/20 border border-white/10 hover:border-[#D4AF37]/40 text-xs font-medium text-white transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <BookOpen className="w-3 h-3 text-[#D4AF37]" />
+                            <span>Read Blogs</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              onOpenBlogGenerator();
+                            }}
+                            className="px-3 py-2 rounded-lg bg-[#D4AF37] hover:bg-white text-black text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 shadow-md shadow-[#D4AF37]/20 cursor-pointer"
+                          >
+                            <Wand2 className="w-3 h-3" />
+                            <span>+ Generate</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            if (onNavigateBlogs) onNavigateBlogs();
+                            else onScrollToSection('brand-insights');
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg bg-white/10 hover:bg-[#D4AF37]/20 border border-white/10 hover:border-[#D4AF37]/40 text-xs font-medium text-white transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-[#D4AF37]" />
+                          <span>Browse Real Estate Publications</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-zinc-300 font-light leading-relaxed mb-2">
-                    {BRAND_CONFIG.address}
-                  </p>
-                  <a
-                    href="https://maps.app.goo.gl/24P5tAitT1zZAdNc8"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[11px] text-[#D4AF37] hover:text-white font-medium transition-colors"
-                  >
-                    <span>Open in Google Maps ↗</span>
-                  </a>
                 </div>
+
               </div>
 
               {/* Drawer Bottom Actions */}
-              <div className="pt-6 border-t border-white/10 space-y-3">
+              <div className="pt-4 border-t border-white/10 space-y-2.5">
                 {currentUser?.verified ? (
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-1">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-[#25D366]" />
                       <div className="text-left">
@@ -387,7 +470,7 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                         setMobileMenuOpen(false);
                         onLogout?.();
                       }}
-                      className="px-2.5 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] uppercase font-mono tracking-wider flex items-center gap-1 transition-colors"
+                      className="px-2.5 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] uppercase font-mono tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <LogOut className="w-3 h-3" />
                       <span>Logout</span>
@@ -399,7 +482,7 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                       setMobileMenuOpen(false);
                       onOpenAuth();
                     }}
-                    className="w-full py-3 rounded text-xs font-mono font-medium border border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2 mb-2"
+                    className="w-full py-2.5 rounded text-xs font-mono font-medium border border-white/20 hover:border-[#D4AF37] text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2 mb-1 cursor-pointer"
                   >
                     <User className="w-4 h-4 text-[#D4AF37]" />
                     <span>Sign In</span>
@@ -411,25 +494,10 @@ export const ProjectNavbar: React.FC<ProjectNavbarProps> = ({
                     setMobileMenuOpen(false);
                     onOpenEnquiry();
                   }}
-                  className="w-full py-3.5 rounded text-xs uppercase tracking-[0.2em] font-bold bg-[#D4AF37] text-black hover:bg-white transition-colors"
+                  className="w-full py-3.5 rounded text-xs uppercase tracking-[0.2em] font-bold bg-[#D4AF37] text-black hover:bg-white transition-colors cursor-pointer"
                 >
                   Book Private Site Visit
                 </button>
-                <a
-                  href={
-                    currentProject
-                      ? `https://maps.google.com/?q=${encodeURIComponent(currentProject.location.googleMapsQuery)}`
-                      : 'https://maps.app.goo.gl/24P5tAitT1zZAdNc8'
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded text-xs uppercase tracking-[0.2em] font-semibold border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all flex items-center justify-center gap-2"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>
-                    {currentProject ? `View ${currentProject.projectName} on Map` : 'View on Google Maps'}
-                  </span>
-                </a>
               </div>
 
             </motion.div>

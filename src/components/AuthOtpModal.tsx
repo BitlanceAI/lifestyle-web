@@ -32,6 +32,9 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
   currentUser,
 }) => {
   const [step, setStep] = useState<'phone' | 'otp' | 'profile' | 'success'>('phone');
+  const [loginMode, setLoginMode] = useState<'client' | 'admin'>('client');
+  const [adminPasscode, setAdminPasscode] = useState('');
+  const [adminError, setAdminError] = useState('');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [name, setName] = useState(currentUser?.name || '');
   const [email, setEmail] = useState(currentUser?.email || '');
@@ -57,9 +60,13 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
       }
       setEnteredOtp('');
       setOtpError('');
+      setAdminError('');
+      setAdminPasscode('');
       setStep('phone');
+      setLoginMode('client');
     }
   }, [isOpen, currentUser]);
+
 
   // Resend cooldown timer
   useEffect(() => {
@@ -176,15 +183,50 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
     }
   };
 
+  // Handle Admin Passcode Login
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPasscode = (import.meta.env.VITE_ADMIN_PASSCODE || 'lifestyle@admin2026').trim();
+    if (!adminPasscode.trim()) {
+      setAdminError('Please enter the Admin Passcode.');
+      return;
+    }
+    if (adminPasscode.trim() !== correctPasscode) {
+      setAdminError('Incorrect Admin Passcode. Verification failed.');
+      return;
+    }
+
+    setAdminError('');
+    finalizeSession(
+      name.trim() || 'Lifestyle Administrator',
+      email.trim() || 'admin@lifestylehomespaces.com',
+      true
+    );
+  };
+
   // Finalize Session & Sync with CRM
-  const finalizeSession = async (userName: string, userEmail: string) => {
+  const finalizeSession = async (userName: string, userEmail: string, explicitAdmin = false) => {
+    const ownerPhone = (import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || '919730768982').replace(/\D/g, '');
+    const adminEmail = (import.meta.env.VITE_CRM_ADMIN_EMAIL || 'admin@lifestylehomespaces.com').toLowerCase();
+    const normPhone = normalizePhone(phone);
+    const cleanedDigits = normPhone.replace(/\D/g, '');
+
+    const isAdmin = Boolean(
+      explicitAdmin ||
+      cleanedDigits === ownerPhone ||
+      cleanedDigits.endsWith('9730768982') ||
+      (userEmail && userEmail.toLowerCase() === adminEmail)
+    );
+
     const verifiedUser: VerifiedUser = {
-      name: userName || 'Lifestyle Member',
-      phone: normalizePhone(phone),
+      name: userName || (isAdmin ? 'Lifestyle Administrator' : 'Lifestyle Member'),
+      phone: normPhone || (isAdmin ? ownerPhone : ''),
       email: userEmail || undefined,
       verified: true,
       verifiedAt: new Date().toISOString(),
       token: `lifestyle_token_${Date.now()}`,
+      role: isAdmin ? 'admin' : 'client',
+      isAdmin: isAdmin,
     };
 
     // Save session in localStorage
@@ -193,6 +235,7 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
     } catch (e) {
       console.warn('Failed to persist session to localStorage:', e);
     }
+
 
     // Background sync with CRM
     captureLeadInCRM({
@@ -272,71 +315,159 @@ export const AuthOtpModal: React.FC<AuthOtpModalProps> = ({
             </button>
           </div>
 
-          {/* STEP 1: Phone Entry */}
+          {/* STEP 1: Phone Entry or Admin Login */}
           {step === 'phone' && (
-            <form onSubmit={handleSendOtp} className="mt-6 space-y-5">
-              <p className="text-sm text-zinc-300 font-light leading-relaxed">
-                Enter your mobile number to receive a secure WhatsApp verification code and access member privileges.
-              </p>
+            <div className="mt-6 space-y-5">
+              {/* Login Mode Switcher */}
+              <div className="flex rounded-xl bg-black/60 border border-white/10 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMode('client');
+                    setOtpError('');
+                    setAdminError('');
+                  }}
+                  className={`flex-1 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all ${
+                    loginMode === 'client'
+                      ? 'bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] font-semibold'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Client Access
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMode('admin');
+                    setOtpError('');
+                    setAdminError('');
+                  }}
+                  className={`flex-1 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    loginMode === 'admin'
+                      ? 'bg-[#D4AF37] text-black font-bold shadow-md shadow-[#D4AF37]/20'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Admin Portal</span>
+                </button>
+              </div>
 
-              <div>
-                <label className="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">
-                  Mobile Number
-                </label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-4 flex items-center gap-1.5 text-zinc-400 font-mono text-sm border-r border-white/15 pr-3">
-                    <span className="text-base">🇮🇳</span>
-                    <span>+91</span>
+              {loginMode === 'client' ? (
+                <form onSubmit={handleSendOtp} className="space-y-5">
+                  <p className="text-sm text-zinc-300 font-light leading-relaxed">
+                    Enter your mobile number to receive a secure WhatsApp verification code and access member privileges.
+                  </p>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">
+                      Mobile Number
+                    </label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-4 flex items-center gap-1.5 text-zinc-400 font-mono text-sm border-r border-white/15 pr-3">
+                        <span className="text-base">🇮🇳</span>
+                        <span>+91</span>
+                      </div>
+                      <input
+                        type="tel"
+                        required
+                        autoFocus
+                        placeholder="85307 63405"
+                        value={phone.replace(/^\+91/, '')}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setPhone(val);
+                          setOtpError('');
+                        }}
+                        className="w-full pl-24 pr-4 py-3.5 bg-black/50 border border-white/15 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37] font-mono transition-colors text-base"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="tel"
-                    required
-                    autoFocus
-                    placeholder="85307 63405"
-                    value={phone.replace(/^\+91/, '')}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setPhone(val);
-                      setOtpError('');
-                    }}
-                    className="w-full pl-24 pr-4 py-3.5 bg-black/50 border border-white/15 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37] font-mono transition-colors text-base"
-                  />
-                </div>
-              </div>
 
-              {otpError && (
-                <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/40 border border-red-900/50 p-3 rounded-lg">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{otpError}</span>
-                </div>
-              )}
+                  {otpError && (
+                    <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/40 border border-red-900/50 p-3 rounded-lg">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{otpError}</span>
+                    </div>
+                  )}
 
-              <button
-                type="submit"
-                disabled={isSendingOtp || phone.replace(/\D/g, '').length < 10}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black font-semibold text-sm tracking-wider uppercase flex items-center justify-center gap-2 hover:opacity-95 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
-              >
-                {isSendingOtp ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Sending Code...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Send Verification Code</span>
+                  <button
+                    type="submit"
+                    disabled={isSendingOtp || phone.replace(/\D/g, '').length < 10}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black font-semibold text-sm tracking-wider uppercase flex items-center justify-center gap-2 hover:opacity-95 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg cursor-pointer"
+                  >
+                    {isSendingOtp ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Sending Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Verification Code</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="text-center">
+                    <span className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
+                      <Lock className="w-3 h-3 text-[#D4AF37]" />
+                      Your phone is verified securely via official WhatsApp
+                    </span>
+                  </div>
+                </form>
+              ) : (
+                /* ADMIN PASSCODE FORM */
+                <form onSubmit={handleAdminLogin} className="space-y-5">
+                  <p className="text-sm text-zinc-300 font-light leading-relaxed">
+                    Sign in with administrator credentials to manage projects and access the Bitlance AI Blog Studio.
+                  </p>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">
+                      Admin Passcode
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      autoFocus
+                      placeholder="Enter Admin Passcode"
+                      value={adminPasscode}
+                      onChange={(e) => {
+                        setAdminPasscode(e.target.value);
+                        setAdminError('');
+                      }}
+                      className="w-full px-4 py-3.5 bg-black/50 border border-white/15 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37] font-mono transition-colors text-sm"
+                    />
+                  </div>
+
+                  {adminError && (
+                    <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/40 border border-red-900/50 p-3 rounded-lg">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{adminError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={!adminPasscode.trim()}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black font-semibold text-sm tracking-wider uppercase flex items-center justify-center gap-2 hover:opacity-95 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg cursor-pointer"
+                  >
+                    <span>Sign In as Admin</span>
                     <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+                  </button>
 
-              <div className="text-center">
-                <span className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
-                  <Lock className="w-3 h-3 text-[#D4AF37]" />
-                  Your phone is verified securely via official WhatsApp
-                </span>
-              </div>
-            </form>
+                  <div className="text-center">
+                    <span className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      Administrative access restricted to authorized staff
+                    </span>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
+
 
           {/* STEP 2: OTP Verification */}
           {step === 'otp' && (

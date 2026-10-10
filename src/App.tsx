@@ -4,10 +4,15 @@ import { PROJECTS, ProjectConfig, BRAND_CONFIG } from './data/projects';
 import { ProjectNavbar } from './components/ProjectNavbar';
 import { BrandHomePage } from './components/BrandHomePage';
 import { ProjectPage } from './components/ProjectPage';
+import { BlogListingPage } from './components/BlogListingPage';
+import { BlogGeneratorModal } from './components/BlogGeneratorModal';
+import { BlogArticleModal } from './components/BlogArticleModal';
 import { EnquiryModal } from './components/EnquiryModal';
 import { AuthOtpModal } from './components/AuthOtpModal';
+import { BrandBlogPost } from './data/projects';
 import { VerifiedUser } from './types/auth';
 import { Chatbot } from './Chatbot';
+
 
 // Dynamic Project Route Component
 function ProjectRoute({ onOpenEnquiry }: { onOpenEnquiry: (pref?: string) => void }) {
@@ -71,6 +76,8 @@ function AppShell() {
 
   // Never opens automatically on page visit or refresh. Opens ONLY when explicitly clicking Sign In.
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isBlogGeneratorOpen, setIsBlogGeneratorOpen] = useState(false);
+  const [activeGeneratedBlog, setActiveGeneratedBlog] = useState<BrandBlogPost | null>(null);
 
   // Determine active project based on URL path
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -79,14 +86,14 @@ function AppShell() {
 
   // Reset generic brand SEO if on homepage
   useEffect(() => {
-    if (!currentProject) {
+    if (!currentProject && location.pathname !== '/blogs') {
       document.title = 'Lifestyle Home Spaces | Master Developers in Amravati, Maharashtra';
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute('content', 'Explore landmark residential & commercial developments by Lifestyle Home Spaces in Amravati, including Aura by Lifestyle and Lifestyle Homes.');
       }
     }
-  }, [currentProject]);
+  }, [currentProject, location.pathname]);
 
   const handleOpenEnquiry = (pref = '2 BHK Residence') => {
     setEnquiryPreference(pref);
@@ -94,11 +101,50 @@ function AppShell() {
   };
 
   const handleScrollToSection = (sectionId: string) => {
+    if (sectionId === 'blogs' || sectionId === 'brand-insights') {
+      if (location.pathname !== '/blogs') {
+        navigate('/blogs');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // If currently on /blogs or cross-navigating to homepage sections
+    if (location.pathname === '/blogs') {
+      navigate('/');
+      setTimeout(() => {
+        const targetId = sectionId === 'developer' ? 'brand-contact' : sectionId;
+        const el = document.getElementById(targetId);
+        if (el) {
+          const yOffset = -75;
+          const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 120);
+      return;
+    }
+
     const el = document.getElementById(sectionId);
     if (el) {
       const yOffset = -75;
       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
+    } else {
+      // If section is not on the current page, navigate home and scroll to it
+      if (location.pathname !== '/') {
+        navigate('/');
+        setTimeout(() => {
+          const targetId = sectionId === 'developer' ? 'brand-contact' : sectionId;
+          const targetEl = document.getElementById(targetId);
+          if (targetEl) {
+            const yOffset = -75;
+            const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 120);
+      }
     }
   };
 
@@ -120,6 +166,8 @@ function AppShell() {
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         currentUser={currentUser}
+        onOpenBlogGenerator={currentUser?.isAdmin ? () => setIsBlogGeneratorOpen(true) : undefined}
+        onNavigateBlogs={() => navigate('/blogs')}
       />
 
       {/* Main Routed Content */}
@@ -131,6 +179,17 @@ function AppShell() {
               <BrandHomePage
                 onSelectProject={(slug) => navigate(`/projects/${slug}`)}
                 onOpenEnquiry={() => handleOpenEnquiry()}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/blogs"
+            element={
+              <BlogListingPage
+                onSelectProject={(slug) => navigate(`/projects/${slug}`)}
+                onOpenEnquiry={() => handleOpenEnquiry()}
+                currentUser={currentUser}
               />
             }
           />
@@ -140,9 +199,11 @@ function AppShell() {
               <BrandHomePage
                 onSelectProject={(slug) => navigate(`/projects/${slug}`)}
                 onOpenEnquiry={() => handleOpenEnquiry()}
+                currentUser={currentUser}
               />
             }
           />
+
           <Route
             path="/projects/:slug"
             element={<ProjectRoute onOpenEnquiry={handleOpenEnquiry} />}
@@ -163,6 +224,7 @@ function AppShell() {
           />
         </Routes>
       </main>
+
 
       {/* Portfolio Concierge Chatbot */}
       <Chatbot />
@@ -186,8 +248,25 @@ function AppShell() {
         onSuccess={(user) => setCurrentUser(user)}
         currentUser={currentUser}
       />
+
+      {/* Bitlance AI Blog Generator Modal (Global Access) */}
+      <BlogGeneratorModal
+        isOpen={isBlogGeneratorOpen}
+        onClose={() => setIsBlogGeneratorOpen(false)}
+        onBlogGenerated={(newBlog) => {
+          setActiveGeneratedBlog(newBlog);
+        }}
+      />
+
+      {/* Reader for Global AI Generated Blog */}
+      <BlogArticleModal
+        blog={activeGeneratedBlog}
+        onClose={() => setActiveGeneratedBlog(null)}
+        onOpenEnquiry={handleOpenEnquiry}
+      />
     </div>
   );
+
 }
 
 export default function App() {
