@@ -19,14 +19,24 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
   currentUser,
 }) => {
 
-  const [blogs, setBlogs] = useState<BrandBlogPost[]>([]);
+  const [blogs, setBlogs] = useState<BrandBlogPost[]>(() => {
+    try {
+      return getAllMergedBlogs();
+    } catch {
+      return [];
+    }
+  });
   const [selectedBlog, setSelectedBlog] = useState<BrandBlogPost | null>(null);
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
   const refreshBlogs = () => {
-    setBlogs(getAllMergedBlogs());
+    try {
+      setBlogs(getAllMergedBlogs());
+    } catch (err) {
+      console.error('Error refreshing blogs:', err);
+    }
   };
 
   useEffect(() => {
@@ -41,19 +51,30 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
     refreshBlogs();
   }, []);
 
-  const categories = ['All', 'AI Generated', ...Array.from(new Set(blogs.map((b) => b.category)))];
+  const categories = [
+    'All',
+    'AI Generated',
+    ...Array.from(new Set(blogs.map((b) => b?.category).filter(Boolean))),
+  ];
 
   const filteredBlogs = blogs.filter((b) => {
-    const matchesSearch =
-      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.category.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!b) return false;
+    const title = b.title || '';
+    const excerpt = b.excerpt || '';
+    const category = b.category || '';
+    const q = searchQuery.toLowerCase().trim();
 
-    if (!matchesSearch) return false;
+    if (q) {
+      const matchesSearch =
+        title.toLowerCase().includes(q) ||
+        excerpt.toLowerCase().includes(q) ||
+        category.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
 
     if (activeCategory === 'All') return true;
-    if (activeCategory === 'AI Generated') return !!b.isAiGenerated;
-    return b.category === activeCategory;
+    if (activeCategory === 'AI Generated') return Boolean(b.isAiGenerated);
+    return category === activeCategory;
   });
 
   const handleDeleteAiBlog = (e: React.MouseEvent, id: string) => {

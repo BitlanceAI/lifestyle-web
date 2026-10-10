@@ -28,6 +28,34 @@ interface BlogArticleModalProps {
   onOpenEnquiry: (pref?: string) => void;
 }
 
+function extractMetaDetails(markdown?: string) {
+  const meta: {
+    metaTitle?: string;
+    metaDescription?: string;
+    urlSlug?: string;
+    readingTime?: string;
+    lastUpdated?: string;
+  } = {};
+
+  if (!markdown) return meta;
+
+  const lines = markdown.split('\n');
+  for (const line of lines) {
+    if (line.includes('Meta Title:')) {
+      meta.metaTitle = line.replace(/.*Meta Title:\*\*\s*/, '').trim();
+    } else if (line.includes('Meta Description:')) {
+      meta.metaDescription = line.replace(/.*Meta Description:\*\*\s*/, '').trim();
+    } else if (line.includes('URL Slug:')) {
+      meta.urlSlug = line.replace(/.*URL Slug:\*\*\s*`?/, '').replace(/`?.*/, '').trim();
+    } else if (line.includes('Reading Time:')) {
+      const parts = line.split('|');
+      meta.readingTime = parts[0]?.replace(/.*Reading Time:\*\*\s*/, '').trim();
+      meta.lastUpdated = parts[1]?.replace(/.*Last Updated:\*\*\s*/, '').trim();
+    }
+  }
+  return meta;
+}
+
 export const BlogArticleModal: React.FC<BlogArticleModalProps> = ({
   blog,
   onClose,
@@ -70,35 +98,8 @@ export const BlogArticleModal: React.FC<BlogArticleModalProps> = ({
   };
 
   // Extract meta block details if present in markdown
-  const markdownText = blog.markdown || blog.content.join('\n\n');
-
-  const metaDetails = useMemo(() => {
-    const meta: {
-      metaTitle?: string;
-      metaDescription?: string;
-      urlSlug?: string;
-      readingTime?: string;
-      lastUpdated?: string;
-    } = {};
-
-    if (!blog.markdown) return meta;
-
-    const lines = blog.markdown.split('\n');
-    for (const line of lines) {
-      if (line.includes('Meta Title:')) {
-        meta.metaTitle = line.replace(/.*Meta Title:\*\*\s*/, '').trim();
-      } else if (line.includes('Meta Description:')) {
-        meta.metaDescription = line.replace(/.*Meta Description:\*\*\s*/, '').trim();
-      } else if (line.includes('URL Slug:')) {
-        meta.urlSlug = line.replace(/.*URL Slug:\*\*\s*`?/, '').replace(/`?.*/, '').trim();
-      } else if (line.includes('Reading Time:')) {
-        const parts = line.split('|');
-        meta.readingTime = parts[0]?.replace(/.*Reading Time:\*\*\s*/, '').trim();
-        meta.lastUpdated = parts[1]?.replace(/.*Last Updated:\*\*\s*/, '').trim();
-      }
-    }
-    return meta;
-  }, [blog.markdown]);
+  const markdownText = blog.markdown || (blog.content ? blog.content.join('\n\n') : '');
+  const metaDetails = extractMetaDetails(blog.markdown);
 
   const scrollToSection = (id: string) => {
     setActiveTocId(id);

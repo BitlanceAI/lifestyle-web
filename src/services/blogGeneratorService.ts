@@ -252,20 +252,25 @@ const INITIAL_BITLANCE_SAMPLE_BLOG: BrandBlogPost = {
  * Returns complete combined list of blogs: static curated portfolio + AI-generated posts
  */
 export function getAllMergedBlogs(): BrandBlogPost[] {
-  const stored = getStoredAiBlogs();
-  
-  // Combine stored blogs first, then the sample Bitlance blog, then the brand defaults
-  const all = [...stored];
-  
-  if (!all.some(b => b.id === INITIAL_BITLANCE_SAMPLE_BLOG.id)) {
-    all.push(INITIAL_BITLANCE_SAMPLE_BLOG);
-  }
-
-  BRAND_CONFIG.blogs.forEach(defaultBlog => {
-    if (!all.some(b => b.id === defaultBlog.id)) {
-      all.push(defaultBlog);
+  try {
+    const stored = getStoredAiBlogs();
+    const all = Array.isArray(stored) ? [...stored] : [];
+    
+    if (INITIAL_BITLANCE_SAMPLE_BLOG && !all.some(b => b && b.id === INITIAL_BITLANCE_SAMPLE_BLOG.id)) {
+      all.push(INITIAL_BITLANCE_SAMPLE_BLOG);
     }
-  });
 
-  return all;
+    if (BRAND_CONFIG && Array.isArray(BRAND_CONFIG.blogs)) {
+      BRAND_CONFIG.blogs.forEach(defaultBlog => {
+        if (defaultBlog && !all.some(b => b && b.id === defaultBlog.id)) {
+          all.push(defaultBlog);
+        }
+      });
+    }
+
+    return all;
+  } catch (err) {
+    console.error('Error in getAllMergedBlogs:', err);
+    return [INITIAL_BITLANCE_SAMPLE_BLOG];
+  }
 }
